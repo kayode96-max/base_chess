@@ -1,120 +1,167 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useQuickAuth,useMiniKit } from "@coinbase/onchainkit/minikit";
-import { useRouter } from "next/navigation";
-import { minikitConfig } from "../minikit.config";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import ChessBoard from "./components/ChessBoard";
+import GameInfo from "./components/GameInfo";
+import GameLobby from "./components/GameLobby";
+import { useChessContract } from "./hooks/useChessContract";
 import styles from "./page.module.css";
 
-interface AuthResponse {
-  success: boolean;
-  user?: {
-    fid: number; // FID is the unique identifier for the user
-    issuedAt?: number;
-    expiresAt?: number;
-  };
-  message?: string; // Error messages come as 'message' not 'error'
-}
-
+type ViewMode = 'lobby' | 'game';
 
 export default function Home() {
   const { isFrameReady, setFrameReady, context } = useMiniKit();
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
-  const router = useRouter();
+  const [viewMode, setViewMode] = useState<ViewMode>('lobby');
+  const [currentGameId, setCurrentGameId] = useState<number | null>(null);
+  const [gameState, setGameState] = useState<any>(null);
+  const [playerAddress, setPlayerAddress] = useState<string>('');
+  
+  const {
+    loading,
+    error: contractError,
+    createGame,
+    joinGame,
+    makeMove,
+    getGameInfo,
+    getOpenGames
+  } = useChessContract();
 
-  // Initialize the  miniapp
+  const [openGames, setOpenGames] = useState<any[]>([]);
+
+  // Initialize the miniapp
   useEffect(() => {
     if (!isFrameReady) {
       setFrameReady();
     }
   }, [setFrameReady, isFrameReady]);
- 
-  
 
-  // If you need to verify the user's identity, you can use the useQuickAuth hook.
-  // This hook will verify the user's signature and return the user's FID. You can update
-  // this to meet your needs. See the /app/api/auth/route.ts file for more details.
-  // Note: If you don't need to verify the user's identity, you can get their FID and other user data
-  // via `context.user.fid`.
-  // const { data, isLoading, error } = useQuickAuth<{
-  //   userFid: string;
-  // }>("/api/auth");
+  // Load open games when in lobby
+  useEffect(() => {
+    if (viewMode === 'lobby') {
+      loadOpenGames();
+    }
+  }, [viewMode]);
 
-  const { data: authData, isLoading: isAuthLoading, error: authError } = useQuickAuth<AuthResponse>(
-    "/api/auth",
-    { method: "GET" }
-  );
+  // Load game state when viewing a game
+  useEffect(() => {
+    if (currentGameId !== null) {
+      loadGameState();
+    }
+  }, [currentGameId]);
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+  const loadOpenGames = async () => {
+    const games = await getOpenGames();
+    setOpenGames(games);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    // Check authentication first
-    if (isAuthLoading) {
-      setError("Please wait while we verify your identity...");
-      return;
+  const loadGameState = async () => {
+    if (currentGameId === null) return;
+    const state = await getGameInfo(currentGameId);
+    if (state) {
+      setGameState(state);
     }
+  };
 
-    if (authError || !authData?.success) {
-      setError("Please authenticate to join the waitlist");
-      return;
+  const handleCreateGame = async (wager: string) => {
+    const result = await createGame('0x0000000000000000000000000000000000000000', wager);
+    if (result.success && result.gameId !== undefined) {
+      setCurrentGameId(result.gameId);
+      setViewMode('game');
     }
+  };
 
-    if (!email) {
-      setError("Please enter your email address");
-      return;
+  const handleJoinGame = async (gameId: number, wager: string) => {
+    const result = await joinGame(gameId, wager);
+    if (result.success) {
+      setCurrentGameId(gameId);
+      setViewMode('game');
     }
+  };
 
-    if (!validateEmail(email)) {
-      setError("Please enter a valid email address");
-      return;
-    }
-
-    // TODO: Save email to database/API with user FID
-    console.log("Valid email submitted:", email);
-    console.log("User authenticated:", authData.user);
+  const handleMove = async (from: number, to: number) => {
+    if (currentGameId === null) return;
     
-    // Navigate to success page
-    router.push("/success");
+    const result = await makeMove(currentGameId, from, to);
+    if (result.success) {
+      // Reload game state after move
+      await loadGameState();
+    }
   };
+
+  const handleBackToLobby = () => {
+    setCurrentGameId(null);
+    setGameState(null);
+    setViewMode('lobby');
+  };
+
+  // Determine if current user is white player
+  const isPlayerWhite = gameState && playerAddress && 
+    gameState.whitePlayer.toLowerCase() === playerAddress.toLowerCase();
 
   return (
     <div className={styles.container}>
-      <button className={styles.closeButton} type="button">
-        ✕
-      </button>
-      
-      <div className={styles.content}>
-        <div className={styles.waitlistForm}>
-          <h1 className={styles.title}>Join {minikitConfig.miniapp.name.toUpperCase()}</h1>
-          
-          <p className={styles.subtitle}>
-             Hey {context?.user?.displayName || "there"}, Get early access and be the first to experience the future of<br />
-            crypto marketing strategy.
-          </p>
-
-          <form onSubmit={handleSubmit} className={styles.form}>
-            <input
-              type="email"
-              placeholder="Your amazing email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={styles.emailInput}
-            />
-            
-            {error && <p className={styles.error}>{error}</p>}
-            
-            <button type="submit" className={styles.joinButton}>
-              JOIN WAITLIST
-            </button>
-          </form>
+      <header className={styles.header}>
+        <div className={styles.headerContent}>
+          <h1 className={styles.logo}>
+            <span className={styles.logoIcon}>♟</span>
+            Base Chess
+          </h1>
+          {context?.user && (
+            <div className={styles.userInfo}>
+              <span className={styles.userName}>{context.user.displayName || 'Player'}</span>
+            </div>
+          )}
         </div>
-      </div>
+      </header>
+
+      <main className={styles.main}>
+        {viewMode === 'lobby' ? (
+          <GameLobby
+            openGames={openGames}
+            onJoinGame={handleJoinGame}
+            onCreateGame={handleCreateGame}
+            loading={loading}
+          />
+        ) : (
+          <div className={styles.gameView}>
+            <button className={styles.backButton} onClick={handleBackToLobby}>
+              ← Back to Lobby
+            </button>
+            
+            {gameState && (
+              <>
+                <GameInfo
+                  whitePlayer={gameState.whitePlayer}
+                  blackPlayer={gameState.blackPlayer}
+                  isWhiteTurn={gameState.whiteTurn}
+                  moveCount={gameState.moveCount}
+                  wager={gameState.wager}
+                />
+                
+                <ChessBoard
+                  board={gameState.board}
+                  onMove={handleMove}
+                  isWhiteTurn={gameState.whiteTurn}
+                  isPlayerWhite={isPlayerWhite}
+                  disabled={gameState.state !== 0 || loading}
+                />
+
+                {contractError && (
+                  <div className={styles.error}>
+                    {contractError}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </main>
+
+      <footer className={styles.footer}>
+        <p className={styles.footerText}>
+          Powered by Base Network • On-chain Chess
+        </p>
+      </footer>
     </div>
   );
 }

@@ -1,0 +1,195 @@
+.container {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.boardWrapper {
+  background: #312e2b;
+  border-radius: 8px;
+  padding: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.fileLabels {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  margin-left: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.fileLabel {
+  text-align: center;
+  color: #b0b0b0;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.boardRow {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.rankLabels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: space-around;
+  padding-right: 0.25rem;
+}
+
+.rankLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b0b0b0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  height: calc((100vw - 4rem) / 8);
+  max-height: 70px;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 2px;
+  background: #1a1a1a;
+  border-radius: 4px;
+  overflow: hidden;
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 560px;
+}
+
+.square {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.square.light {
+  background: #f0d9b5;
+}
+
+.square.dark {
+  background: #b58863;
+}
+
+.square:hover {
+  opacity: 0.85;
+}
+
+.square.selected {
+  box-shadow: inset 0 0 0 3px #7fa650;
+  z-index: 1;
+}
+
+.square.legalMove {
+  background-image: radial-gradient(circle, rgba(127, 166, 80, 0.4) 25%, transparent 25%);
+}
+
+.square.legalMove:hover {
+  background-image: radial-gradient(circle, rgba(127, 166, 80, 0.6) 25%, transparent 25%);
+}
+
+.square.lastMove {
+  background-color: rgba(255, 255, 0, 0.3);
+}
+
+.piece {
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  line-height: 1;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.piece.white {
+  color: #ffffff;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.4));
+}
+
+.piece.black {
+  color: #000000;
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.2));
+}
+
+.moveIndicator {
+  position: absolute;
+  width: 30%;
+  height: 30%;
+  background: rgba(127, 166, 80, 0.5);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.turnIndicator {
+  margin-top: 1rem;
+  text-align: center;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.yourTurn {
+  color: #4caf50;
+}
+
+.opponentTurn {
+  color: #ff9800;
+}
+
+.gameOver {
+  color: #f44336;
+}
+
+/* Tablet and larger */
+@media (min-width: 768px) {
+  .container {
+    padding: 1.5rem;
+  }
+
+  .boardWrapper {
+    padding: 1rem;
+  }
+
+  .fileLabel,
+  .rankLabel {
+    font-size: 0.875rem;
+  }
+
+  .rankLabel {
+    height: auto;
+  }
+
+  .piece {
+    font-size: 3.5rem;
+  }
+
+  .turnIndicator {
+    font-size: 1.125rem;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .container {
+    max-width: 700px;
+  }
+
+  .board {
+    max-width: 660px;
+  }
+
+  .piece {
+    font-size: 4rem;
+  }
+}
