@@ -13,7 +13,7 @@ import {
   Move,
   GameStatus 
 } from './lib/chessEngine';
-import { getBestMove, Difficulty } from './lib/chessAI';
+import { Difficulty } from './lib/genkitChessAI';
 import styles from './page.module.css';
 
 type GameMode = 'menu' | 'single-player' | 'multiplayer' | 'online-lobby' | 'online-game';
@@ -35,21 +35,60 @@ export default function Home() {
                      gameState.status === GameStatus.Stalemate || 
                      gameState.status === GameStatus.Draw;
 
-  // AI makes a move
+  // AI makes a move using Gemini GenKit
   useEffect(() => {
     if (!isAITurn || isGameOver || isAIThinking) return;
 
     setIsAIThinking(true);
     
     // Add a small delay to make it feel more natural
-    const timer = setTimeout(() => {
-      const aiMove = getBestMove(gameState, difficulty);
-      if (aiMove) {
-        const newState = applyMove(gameState, aiMove);
-        setGameState(newState);
-        setLastMove(aiMove);
+    const timer = setTimeout(async () => {
+      try {
+        // Call the API route to get AI move
+        const response = await fetch('/api/ai-move', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            gameState,
+            difficulty,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to get AI move');
+        }
+
+        const data = await response.json();
+        
+        if (data.move) {
+          const aiMove: Move = {
+            from: data.move.from,
+            to: data.move.to,
+            piece: gameState.board[data.move.from],
+            capturedPiece: gameState.board[data.move.to],
+          };
+          
+          console.log('AI reasoning:', data.reasoning);
+          
+          const newState = applyMove(gameState, aiMove);
+          setGameState(newState);
+          setLastMove(aiMove);
+        }
+      } catch (error) {
+        console.error('Error getting AI move:', error);
+        // Fallback to local AI if API fails
+        const { getBestMove } = await import('./lib/chessAI');
+        const aiMove = getBestMove(gameState, difficulty);
+        if (aiMove) {
+          const newState = applyMove(gameState, aiMove);
+          setGameState(newState);
+          setLastMove(aiMove);
+        }
+      } finally {
+        setIsAIThinking(false);
       }
-      setIsAIThinking(false);
     }, 300 + Math.random() * 500);
 
     return () => clearTimeout(timer);
