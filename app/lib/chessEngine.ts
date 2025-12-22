@@ -36,6 +36,7 @@ export interface Move {
   isEnPassant?: boolean;
   isCheck?: boolean;
   isCheckmate?: boolean;
+  capturedPiece?: number;
 }
 
 export interface GameState {
