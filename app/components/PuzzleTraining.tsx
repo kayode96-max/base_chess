@@ -1,83 +1,186 @@
 import { useState, useEffect } from 'react';
 import { useChessPuzzles } from '../hooks/useAdvancedContracts';
+import PuzzleBoard from './PuzzleBoard';
+import { 
+  GameState, 
+  Move, 
+  makeMove, 
+  createStateFromFEN,
+  moveToUCI 
+} from '../lib/chessEngine';
+import { 
+  ChessPuzzle, 
+  getRandomPuzzle, 
+  getPuzzleByRating,
+  PUZZLE_THEMES, 
+  PUZZLE_DIFFICULTIES 
+} from '../lib/puzzleData';
 import styles from './PuzzleTraining.module.css';
-
-interface Puzzle {
-  fen: string;
-  solution: string[];
-  theme: string;
-  difficulty: string;
-  rating: number;
-}
-
-const THEMES = ['Checkmate', 'Tactics', 'Endgame', 'Opening', 'Middlegame', 'Trapped', 'Fork', 'Pin', 'Skewer', 'Discovery'];
-const DIFFICULTIES = ['Beginner', 'Intermediate', 'Advanced', 'Expert', 'Master'];
 
 export default function PuzzleTraining() {
   const { puzzleStats, attemptPuzzle } = useChessPuzzles();
-  const [currentPuzzle, setCurrentPuzzle] = useState<Puzzle | null>(null);
-  const [userMoves, setUserMoves] = useState<string[]>([]);
+  
+  const [currentPuzzle, setCurrentPuzzle] = useState<ChessPuzzle | null>(null);
+  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [moveIndex, setMoveIndex] = useState(0);
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [feedback, setFeedback] = useState<string>('');
+  const [feedbackType, setFeedbackType] = useState<'success' | 'error' | 'info'>('info');
+  const [isSolved, setIsSolved] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+  const [playerRating, setPlayerRating] = useState(1500);
 
-  // Mock puzzle for demonstration
+
+  // Load player rating from stats
   useEffect(() => {
-    setCurrentPuzzle({
-      fen: 'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -',
-      solution: ['f3e5', 'd8g5', 'e5f7'], // Fried Liver Attack setup
-      theme: THEMES[1], // Tactics
-      difficulty: DIFFICULTIES[1], // Intermediate
-      rating: 1500
-    });
+    if (puzzleStats && puzzleStats[4]) {
+      setPlayerRating(Number(puzzleStats[4]) || 1500);
+    }
+  }, [puzzleStats]);
+
+  // Load initial puzzle
+  useEffect(() => {
+    loadNewPuzzle();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleMoveInput = (move: string) => {
-    const newMoves = [...userMoves, move];
-    setUserMoves(newMoves);
+  const loadNewPuzzle = () => {
+    let puzzle: ChessPuzzle | undefined;
+    
+    // Try to get puzzle matching player rating
+    puzzle = getPuzzleByRating(playerRating - 200, playerRating + 200);
+    
+    // Fallback to random puzzle
+    if (!puzzle) {
+      puzzle = getRandomPuzzle();
+    }
+    
+    setCurrentPuzzle(puzzle);
+    setGameState(createStateFromFEN(puzzle.fen));
+    setMoveIndex(0);
+    setFeedback('');
+    setFeedbackType('info');
+    setIsSolved(false);
+    setStartTime(Date.now());
+    setAttempts(0);
+  };
 
-    if (currentPuzzle) {
-      // Check if move matches solution at this step
-      const stepIndex = newMoves.length - 1;
-      if (newMoves[stepIndex] === currentPuzzle.solution[stepIndex]) {
-        if (newMoves.length === currentPuzzle.solution.length) {
-          // Puzzle solved!
-          handlePuzzleSolved();
-        } else {
-          setFeedback('✓ Correct! Continue...');
-        }
+  const handleMove = (move: Move) => {
+    if (!currentPuzzle || !gameState || isSolved) return;
+
+    const uciMove = moveToUCI(move);
+    const expectedMove = currentPuzzle.moves[moveIndex];
+
+    // Check if the move is correct
+    if (uciMove === expectedMove) {
+      // Correct move!
+      const newState = makeMove(gameState, move);
+      setGameState(newState);
+      setMoveIndex(moveIndex + 1);
+      setAttempts(attempts + 1);
+
+      // Check if puzzle is complete
+      if (moveIndex + 1 >= currentPuzzle.moves.length) {
+        handlePuzzleSolved();
       } else {
-        setFeedback('✗ Incorrect move. Try again!');
-        setTimeout(() => {
-          setUserMoves([]);
-          setFeedback('');
-        }, 1500);
+        setFeedback(`✓ Correct! Move ${moveIndex + 1}/${currentPuzzle.moves.length}`);
+        setFeedbackType('success');
+        
+        // Auto-play opponent's response if there is one
+        if (moveIndex + 1 < currentPuzzle.moves.length) {
+          setTimeout(() => playOpponentMove(), 500);
+        }
+      }
+    } else {
+      // Wrong move
+      setFeedback('✗ Not the best move. Try again!');
+      setFeedbackType('error');
+      setAttempts(attempts + 1);
+      
+      // Reset to puzzle start after wrong move
+      setTimeout(() => {
+        setGameState(createStateFromFEN(currentPuzzle.fen));
+        setMoveIndex(0);
+        setFeedback('Puzzle reset. Try again!');
+        setFeedbackType('info');
+      }, 1500);
+    }
+  };
+
+  const playOpponentMove = () => {
+    if (!currentPuzzle || !gameState) return;
+
+    const opponentMoveUCI = currentPuzzle.moves[moveIndex];
+    const move = uciToMove(opponentMoveUCI, gameState);
+    
+    if (move) {
+      const newState = makeMove(gameState, move);
+      setGameState(newState);
+      setMoveIndex(moveIndex + 1);
+      
+      if (moveIndex + 1 < currentPuzzle.moves.length) {
+        setFeedback('Opponent played. Your turn!');
+        setFeedbackType('info');
       }
     }
+  };
+
+  const uciToMove = (uci: string, state: GameState): Move | null => {
+    const from = (8 - parseInt(uci[1])) * 8 + (uci.charCodeAt(0) - 97);
+    const to = (8 - parseInt(uci[3])) * 8 + (uci.charCodeAt(2) - 97);
+    
+    return {
+      from,
+      to,
+      piece: state.board[from],
+      capturedPiece: state.board[to]
+    };
   };
 
   const handlePuzzleSolved = async () => {
+    setIsSolved(true);
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
     
+    setFeedback('🎉 Puzzle solved! Excellent!');
+    setFeedbackType('success');
+
+    // Submit to blockchain (wrapped in try-catch as it may fail if not connected)
     try {
       if (currentPuzzle) {
-        await attemptPuzzle(0, userMoves, timeSpent);
-        setFeedback('🎉 Puzzle solved! Great job!');
+        await attemptPuzzle(
+          currentPuzzle.id, 
+          currentPuzzle.moves, 
+          timeSpent
+        );
       }
     } catch (error) {
-      console.error('Error submitting puzzle:', error);
+      console.log('Blockchain submission skipped:', error);
+      // Continue anyway - puzzle solving works offline too
     }
   };
 
-  const loadNextPuzzle = () => {
-    // In production, this would fetch the next puzzle from the contract
-    setUserMoves([]);
-    setFeedback('');
-    setStartTime(Date.now());
+  const showHint = () => {
+    if (!currentPuzzle || isSolved) return;
+    
+    const nextMove = currentPuzzle.moves[moveIndex];
+    const fromSquare = nextMove.slice(0, 2);
+    const toSquare = nextMove.slice(2, 4);
+    
+    setFeedback(`💡 Hint: Move from ${fromSquare} to ${toSquare}`);
+    setFeedbackType('info');
   };
 
-  if (!currentPuzzle) {
+  const skipPuzzle = () => {
+    loadNewPuzzle();
+    setFeedback('Puzzle skipped. Try this one!');
+    setFeedbackType('info');
+  };
+
+  if (!currentPuzzle || !gameState) {
     return <div className={styles.loading}>Loading puzzle...</div>;
   }
+
+  const playerColor = gameState.isWhiteTurn ? 'white' : 'black';
 
   return (
     <div className={styles.puzzleTraining}>
@@ -86,9 +189,7 @@ export default function PuzzleTraining() {
         <div className={styles.stats}>
           <div className={styles.statBox}>
             <span className={styles.statLabel}>Rating</span>
-            <span className={styles.statValue}>
-              {puzzleStats ? Number(puzzleStats[4]) : 1500}
-            </span>
+            <span className={styles.statValue}>{playerRating}</span>
           </div>
           <div className={styles.statBox}>
             <span className={styles.statLabel}>Solved</span>
@@ -108,62 +209,65 @@ export default function PuzzleTraining() {
       <div className={styles.puzzleContainer}>
         <div className={styles.puzzleInfo}>
           <div className={styles.infoBadge}>
-            <span className={styles.theme}>{currentPuzzle.theme}</span>
-            <span className={styles.difficulty}>{currentPuzzle.difficulty}</span>
+            <span className={styles.theme}>{PUZZLE_THEMES[currentPuzzle.theme]}</span>
+            <span className={styles.difficulty}>{PUZZLE_DIFFICULTIES[currentPuzzle.difficulty]}</span>
             <span className={styles.rating}>⚡ {currentPuzzle.rating}</span>
           </div>
           
           <div className={styles.instructions}>
-            <h3>Find the best move sequence</h3>
-            <p>White to move and win</p>
+            <h3>{currentPuzzle.description}</h3>
+            <p className={styles.turnIndicator}>
+              {playerColor === 'white' ? '♔' : '♚'} {playerColor === 'white' ? 'White' : 'Black'} to move
+            </p>
+            <p className={styles.progress}>
+              Move {moveIndex + 1} of {currentPuzzle.moves.length}
+            </p>
           </div>
         </div>
 
-        <div className={styles.boardPlaceholder}>
-          <div className={styles.fenDisplay}>
-            <code>{currentPuzzle.fen}</code>
-          </div>
-          <p className={styles.note}>
-            Chess board visualization would go here
-          </p>
+        <div className={styles.boardContainer}>
+          <PuzzleBoard
+            gameState={gameState}
+            onMove={handleMove}
+            disabled={isSolved}
+            highlightLegalMoves={true}
+            playerColor={playerColor}
+          />
         </div>
 
         <div className={styles.controls}>
-          <div className={styles.moveInput}>
-            <input
-              type="text"
-              placeholder="Enter move (e.g., e2e4)"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleMoveInput((e.target as HTMLInputElement).value);
-                  (e.target as HTMLInputElement).value = '';
-                }
-              }}
-              className={styles.input}
-            />
-            <button className={styles.hintButton}>💡 Hint</button>
-          </div>
-
           {feedback && (
-            <div className={`${styles.feedback} ${feedback.includes('✓') ? styles.correct : styles.incorrect}`}>
+            <div className={`${styles.feedback} ${styles[feedbackType]}`}>
               {feedback}
             </div>
           )}
 
-          <div className={styles.moveHistory}>
-            <strong>Your moves:</strong>
-            {userMoves.map((move, i) => (
-              <span key={i} className={styles.move}>{move}</span>
-            ))}
-          </div>
-
           <div className={styles.actions}>
-            <button className={styles.skipButton} onClick={loadNextPuzzle}>
+            <button 
+              className={styles.hintButton} 
+              onClick={showHint}
+              disabled={isSolved}
+            >
+              💡 Hint
+            </button>
+            <button 
+              className={styles.skipButton} 
+              onClick={skipPuzzle}
+            >
               Skip Puzzle
             </button>
-            <button className={styles.nextButton} onClick={loadNextPuzzle}>
+            <button 
+              className={styles.nextButton} 
+              onClick={loadNewPuzzle}
+              disabled={!isSolved}
+            >
               Next Puzzle →
             </button>
+          </div>
+
+          <div className={styles.stats}>
+            <span>Attempts: {attempts}</span>
+            <span>Time: {Math.floor((Date.now() - startTime) / 1000)}s</span>
           </div>
         </div>
       </div>
@@ -171,7 +275,7 @@ export default function PuzzleTraining() {
       <div className={styles.dailyChallenge}>
         <div className={styles.challengeHeader}>
           <h2>🏆 Daily Challenge</h2>
-          <span className={styles.timer}>Time left: 8:42:15</span>
+          <span className={styles.timer}>Resets in: 23:42:15</span>
         </div>
         <p>Solve today&apos;s puzzle and compete for rewards!</p>
         <div className={styles.prizePool}>

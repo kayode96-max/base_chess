@@ -821,3 +821,135 @@ export function evaluateBoard(board: number[]): number {
   
   return score;
 }
+
+// Create game state from FEN notation
+export function createStateFromFEN(fen: string): GameState {
+  const parts = fen.split(' ');
+  const position = parts[0];
+  const turn = parts[1] || 'w';
+  const castling = parts[2] || '-';
+  const enPassant = parts[3] || '-';
+  const halfMove = parseInt(parts[4] || '0');
+  const fullMove = parseInt(parts[5] || '1');
+
+  const board: number[] = new Array(64).fill(0);
+  
+  // Parse position
+  const rows = position.split('/');
+  let square = 0;
+  
+  for (const row of rows) {
+    for (const char of row) {
+      if (char >= '1' && char <= '8') {
+        square += parseInt(char);
+      } else {
+        const piece = fenCharToPiece(char);
+        board[square] = piece;
+        square++;
+      }
+    }
+  }
+
+  // Parse castling rights
+  const castlingRights = {
+    whiteKingside: castling.includes('K'),
+    whiteQueenside: castling.includes('Q'),
+    blackKingside: castling.includes('k'),
+    blackQueenside: castling.includes('q'),
+  };
+
+  // Parse en passant
+  let enPassantSquare: number | null = null;
+  if (enPassant !== '-') {
+    const file = enPassant.charCodeAt(0) - 97; // a=0, b=1, etc.
+    const rank = 8 - parseInt(enPassant[1]);
+    enPassantSquare = rank * 8 + file;
+  }
+
+  return {
+    board,
+    isWhiteTurn: turn === 'w',
+    castlingRights,
+    enPassantSquare,
+    halfMoveClock: halfMove,
+    fullMoveNumber: fullMove,
+    moveHistory: [],
+    status: GameStatus.Active,
+    positionHistory: [],
+  };
+}
+
+// Convert FEN character to piece number
+function fenCharToPiece(char: string): number {
+  const pieces: { [key: string]: number } = {
+    'P': Piece.WPawn, 'N': Piece.WKnight, 'B': Piece.WBishop,
+    'R': Piece.WRook, 'Q': Piece.WQueen, 'K': Piece.WKing,
+    'p': Piece.BPawn, 'n': Piece.BKnight, 'b': Piece.BBishop,
+    'r': Piece.BRook, 'q': Piece.BQueen, 'k': Piece.BKing,
+  };
+  return pieces[char] || 0;
+}
+
+// Convert move to UCI notation (e.g., "e2e4")
+export function moveToUCI(move: Move): string {
+  const fromFile = String.fromCharCode(97 + (move.from % 8));
+  const fromRank = 8 - Math.floor(move.from / 8);
+  const toFile = String.fromCharCode(97 + (move.to % 8));
+  const toRank = 8 - Math.floor(move.to / 8);
+  
+  let uci = `${fromFile}${fromRank}${toFile}${toRank}`;
+  
+  // Add promotion piece if applicable
+  if (move.promotion) {
+    const promotionPieces: { [key: number]: string } = {
+      [Piece.WQueen]: 'q', [Piece.BQueen]: 'q',
+      [Piece.WRook]: 'r', [Piece.BRook]: 'r',
+      [Piece.WBishop]: 'b', [Piece.BBishop]: 'b',
+      [Piece.WKnight]: 'n', [Piece.BKnight]: 'n',
+    };
+    uci += promotionPieces[move.promotion] || 'q';
+  }
+  
+  return uci;
+}
+
+// Parse UCI notation to move (requires game state for context)
+export function uciToMove(uci: string, state: GameState): Move | null {
+  if (uci.length < 4) return null;
+  
+  const fromFile = uci.charCodeAt(0) - 97;
+  const fromRank = 8 - parseInt(uci[1]);
+  const toFile = uci.charCodeAt(2) - 97;
+  const toRank = 8 - parseInt(uci[3]);
+  
+  const from = fromRank * 8 + fromFile;
+  const to = toRank * 8 + toFile;
+  
+  const piece = state.board[from];
+  const capturedPiece = state.board[to];
+  
+  const move: Move = {
+    from,
+    to,
+    piece,
+    capturedPiece,
+  };
+  
+  // Check for promotion
+  if (uci.length === 5) {
+    const promotionChar = uci[4];
+    const isWhite = isWhitePiece(piece);
+    const promotionPieces: { [key: string]: number } = {
+      'q': isWhite ? Piece.WQueen : Piece.BQueen,
+      'r': isWhite ? Piece.WRook : Piece.BRook,
+      'b': isWhite ? Piece.WBishop : Piece.BBishop,
+      'n': isWhite ? Piece.WKnight : Piece.BKnight,
+    };
+    move.promotion = promotionPieces[promotionChar];
+  }
+  
+  return move;
+}
+
+// Export PieceType for backward compatibility
+export const PieceType = Piece;
