@@ -4,6 +4,8 @@ import { useComposeCast } from '@coinbase/onchainkit/minikit';
 import { minikitConfig } from "../../minikit.config";
 import styles from "./page.module.css";
 
+export const dynamic = 'force-dynamic';
+
 export default function Success() {
 
   const { composeCastAsync } = useComposeCast();

@@ -29,9 +29,18 @@ export default function PuzzleTraining() {
   const [isSolved, setIsSolved] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [playerRating, setPlayerRating] = useState(1500);
+  const [localStats, setLocalStats] = useState({ solved: 0, attempted: 0, streak: 0 });
 
 
-  // Load player rating from stats
+  // Load local stats from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('puzzleStats');
+    if (saved) {
+      setLocalStats(JSON.parse(saved));
+    }
+  }, []);
+
+  // Load player rating from stats (blockchain or local)
   useEffect(() => {
     if (puzzleStats && puzzleStats[4]) {
       setPlayerRating(Number(puzzleStats[4]) || 1500);
@@ -144,9 +153,18 @@ export default function PuzzleTraining() {
     setFeedback('🎉 Puzzle solved! Excellent!');
     setFeedbackType('success');
 
-    // Submit to blockchain (wrapped in try-catch as it may fail if not connected)
+    // Update local stats
+    const newStats = {
+      solved: localStats.solved + 1,
+      attempted: localStats.attempted + 1,
+      streak: localStats.streak + 1
+    };
+    setLocalStats(newStats);
+    localStorage.setItem('puzzleStats', JSON.stringify(newStats));
+
+    // Try to submit to blockchain (optional)
     try {
-      if (currentPuzzle) {
+      if (currentPuzzle && attemptPuzzle) {
         await attemptPuzzle(
           currentPuzzle.id, 
           currentPuzzle.moves, 
@@ -155,7 +173,7 @@ export default function PuzzleTraining() {
       }
     } catch (error) {
       console.log('Blockchain submission skipped:', error);
-      // Continue anyway - puzzle solving works offline too
+      // Continue anyway - puzzle solving works offline
     }
   };
 
@@ -194,13 +212,13 @@ export default function PuzzleTraining() {
           <div className={styles.statBox}>
             <span className={styles.statLabel}>Solved</span>
             <span className={styles.statValue}>
-              {puzzleStats ? Number(puzzleStats[1]) : 0}
+              {puzzleStats ? Number(puzzleStats[1]) : localStats.solved}
             </span>
           </div>
           <div className={styles.statBox}>
             <span className={styles.statLabel}>Streak</span>
             <span className={styles.statValue}>
-              {puzzleStats ? Number(puzzleStats[2]) : 0}
+              {puzzleStats ? Number(puzzleStats[2]) : localStats.streak}
             </span>
           </div>
         </div>

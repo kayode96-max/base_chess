@@ -76,11 +76,11 @@
 }
 
 .square.light {
-  background: #f0d9b5;
+  background: var(--light-square, #f0d9b5);
 }
 
 .square.dark {
-  background: #b58863;
+  background: var(--dark-square, #b58863);
 }
 
 .square:hover {

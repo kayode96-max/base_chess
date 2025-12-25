@@ -15,6 +15,15 @@ import styles from './LearningDashboard.module.css';
 
 type ViewMode = 'dashboard' | 'lesson' | 'path';
 
+interface LocalProgress {
+  completedLessons: number[];
+  gamesAnalyzed: number;
+  lessonsCompleted: number;
+  currentStreak: number;
+  longestStreak: number;
+  skillLevels: Record<number, number>;
+}
+
 export default function LearningDashboard() {
   const { playerStats, skillLevels, completeLesson, isLoading } = useChessAcademy();
   
@@ -23,12 +32,30 @@ export default function LearningDashboard() {
   const [selectedPathId, setSelectedPathId] = useState<number | null>(null);
   const [completedLessons, setCompletedLessons] = useState<Set<number>>(new Set());
   const [unlockedAchievements, setUnlockedAchievements] = useState<Set<number>>(new Set());
+  const [localProgress, setLocalProgress] = useState<LocalProgress>({
+    completedLessons: [],
+    gamesAnalyzed: 0,
+    lessonsCompleted: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    skillLevels: {}
+  });
 
-  // Parse player stats
-  const gamesAnalyzed = playerStats ? Number(playerStats[0]) : 0;
-  const lessonsCompleted = playerStats ? Number(playerStats[1]) : 0;
-  const currentStreak = playerStats ? Number(playerStats[2]) : 0;
-  const longestStreak = playerStats ? Number(playerStats[3]) : 0;
+  // Load local progress from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('learningProgress');
+    if (saved) {
+      const progress = JSON.parse(saved);
+      setLocalProgress(progress);
+      setCompletedLessons(new Set(progress.completedLessons));
+    }
+  }, []);
+
+  // Parse player stats (use blockchain or local)
+  const gamesAnalyzed = playerStats ? Number(playerStats[0]) : localProgress.gamesAnalyzed;
+  const lessonsCompleted = playerStats ? Number(playerStats[1]) : localProgress.lessonsCompleted;
+  const currentStreak = playerStats ? Number(playerStats[2]) : localProgress.currentStreak;
+  const longestStreak = playerStats ? Number(playerStats[3]) : localProgress.longestStreak;
 
   // Check unlocked achievements
   useEffect(() => {
@@ -36,14 +63,14 @@ export default function LearningDashboard() {
     ACHIEVEMENTS.forEach(achievement => {
       const skillLevel = skillLevels 
         ? Number(skillLevels[achievement.category]) 
-        : 0;
+        : (localProgress.skillLevels[achievement.category] || 0);
       
       if (checkAchievementUnlocked(achievement, gamesAnalyzed, lessonsCompleted, skillLevel)) {
         unlocked.add(achievement.id);
       }
     });
     setUnlockedAchievements(unlocked);
-  }, [playerStats, skillLevels, gamesAnalyzed, lessonsCompleted]);
+  }, [playerStats, skillLevels, gamesAnalyzed, lessonsCompleted, localProgress]);
 
   const handleStartLesson = (lessonId: number) => {
     setSelectedLessonId(lessonId);
@@ -56,17 +83,29 @@ export default function LearningDashboard() {
   };
 
   const handleCompleteLesson = async (lessonId: number) => {
+    // Update local progress
+    const newProgress = {
+      ...localProgress,
+      completedLessons: [...localProgress.completedLessons, lessonId],
+      lessonsCompleted: localProgress.lessonsCompleted + 1,
+      currentStreak: localProgress.currentStreak + 1,
+      longestStreak: Math.max(localProgress.longestStreak, localProgress.currentStreak + 1)
+    };
+    setLocalProgress(newProgress);
+    localStorage.setItem('learningProgress', JSON.stringify(newProgress));
+    setCompletedLessons(prev => new Set([...prev, lessonId]));
+    
+    // Try blockchain submission (optional)
     try {
-      await completeLesson(lessonId);
-      setCompletedLessons(prev => new Set([...prev, lessonId]));
+      if (completeLesson) {
+        await completeLesson(lessonId);
+      }
       setViewMode('dashboard');
-      alert('🎉 Lesson completed! Skill points earned.');
+      alert('🎉 Lesson completed! Skill points earned (saved locally & on-chain).');
     } catch (error) {
       console.log('Blockchain submission skipped:', error);
-      // Mark as completed locally anyway
-      setCompletedLessons(prev => new Set([...prev, lessonId]));
       setViewMode('dashboard');
-      alert('✓ Lesson completed locally!');
+      alert('✓ Lesson completed locally! Connect wallet to save on-chain.');
     }
   };
 

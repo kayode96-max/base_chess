@@ -8,16 +8,36 @@ import OnlineGame from './components/OnlineGame';
 import LearningDashboard from './components/LearningDashboard';
 import CoachMarketplace from './components/CoachMarketplace';
 import PuzzleTraining from './components/PuzzleTraining';
+import ThemeSwitcher from './components/ThemeSwitcher';
 import { 
   createInitialState, 
   makeMove as applyMove, 
   undoMove, 
   GameState, 
   Move,
-  GameStatus 
+  GameStatus,
+  PieceType 
 } from './lib/chessEngine';
 import { Difficulty } from './lib/genkitChessAI';
 import styles from './page.module.css';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
+const PIECE_SYMBOLS: Record<number, string> = {
+  [PieceType.WPawn]: '♙',
+  [PieceType.WKnight]: '♘',
+  [PieceType.WBishop]: '♗',
+  [PieceType.WRook]: '♖',
+  [PieceType.WQueen]: '♕',
+  [PieceType.WKing]: '♔',
+  [PieceType.BPawn]: '♟',
+  [PieceType.BKnight]: '♞',
+  [PieceType.BBishop]: '♝',
+  [PieceType.BRook]: '♜',
+  [PieceType.BQueen]: '♛',
+  [PieceType.BKing]: '♚',
+};
 
 type GameMode = 'menu' | 'single-player' | 'multiplayer' | 'online-lobby' | 'online-game' | 'learn' | 'coaches' | 'puzzles';
 type ColorChoice = 'white' | 'black' | 'random';
@@ -191,6 +211,7 @@ export default function Home() {
               <span className={styles.logoIcon}>♟</span>
               Base Chess
             </h1>
+            <ThemeSwitcher />
           </div>
         </header>
         <LearningDashboard />
@@ -211,6 +232,7 @@ export default function Home() {
               <span className={styles.logoIcon}>♟</span>
               Base Chess
             </h1>
+            <ThemeSwitcher />
           </div>
         </header>
         <CoachMarketplace />
@@ -231,6 +253,7 @@ export default function Home() {
               <span className={styles.logoIcon}>♟</span>
               Base Chess
             </h1>
+            <ThemeSwitcher />
           </div>
         </header>
         <PuzzleTraining />
@@ -248,15 +271,54 @@ export default function Home() {
               <span className={styles.logoIcon}>♟</span>
               Base Chess
             </h1>
+            <ThemeSwitcher />
           </div>
         </header>
 
         <main className={styles.main}>
           <div className={styles.menuContainer}>
+            <div className={styles.heroSection}>
+              <div className={styles.chessPieces}>
+                <span className={styles.piece}>♔</span>
+                <span className={styles.piece}>♕</span>
+                <span className={styles.piece}>♖</span>
+                <span className={styles.piece}>♗</span>
+                <span className={styles.piece}>♘</span>
+                <span className={styles.piece}>♙</span>
+              </div>
+              <h2 className={styles.heroTitle}>Master the Game of Kings</h2>
+              <p className={styles.heroSubtitle}>
+                Play chess on-chain • Learn from the best • Earn rewards
+              </p>
+              <div className={styles.miniBoard}>
+                {[0, 1, 2, 3, 4, 5, 6, 7].map(row => (
+                  <div key={row} className={styles.boardRow}>
+                    {[0, 1, 2, 3, 4, 5, 6, 7].map(col => {
+                      const isLight = (row + col) % 2 === 0;
+                      const index = row * 8 + col;
+                      const piece = gameState.board[index];
+                      return (
+                        <div 
+                          key={col} 
+                          className={`${styles.miniSquare} ${isLight ? styles.light : styles.dark}`}
+                        >
+                          {piece !== 0 && (
+                            <span className={styles.miniPiece}>
+                              {PIECE_SYMBOLS[piece] || ''}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+            
             <div className={styles.menuTitle}>
-              <span className={styles.menuIcon}>♔</span>
-              <h2>Play Chess</h2>
-              <p className={styles.menuSubtitle}>Choose your game mode</p>
+              <span className={styles.menuIcon}>🎮</span>
+              <h2>Choose Your Game Mode</h2>
+              <p className={styles.menuSubtitle}>Practice, compete, learn & earn</p>
             </div>
 
             <div className={styles.modeCards}>
@@ -420,8 +482,11 @@ export default function Home() {
             <span className={styles.logoIcon}>♟</span>
             Base Chess
           </h1>
-          <div className={styles.modeTag}>
-            {gameMode === 'single-player' ? '🤖 vs AI' : '👥 2 Players'}
+          <div className={styles.headerRight}>
+            <div className={styles.modeTag}>
+              {gameMode === 'single-player' ? '🤖 vs AI' : '👥 2 Players'}
+            </div>
+            <ThemeSwitcher />
           </div>
         </div>
       </header>
