@@ -67,23 +67,38 @@ export default function Home() {
     // Add a small delay to make it feel more natural
     const timer = setTimeout(async () => {
       try {
-        // Call the API route to get AI move
-        const response = await fetch('/api/ai-move', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            gameState,
-            difficulty,
-          }),
-        });
+        // Call the API route to get AI move with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-        if (!response.ok) {
-          throw new Error('Failed to get AI move');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let data: any = null;
+        try {
+          console.log('[Client] Fetching AI move...');
+          const fetchStart = Date.now();
+          const response = await fetch('/api/ai-move', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ gameState, difficulty }),
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+          const fetchElapsed = Date.now() - fetchStart;
+          console.log('[Client] Fetch complete', { elapsed: `${fetchElapsed}ms`, status: response.status });
+
+          if (!response.ok) {
+            console.error('[Client] API returned error', { status: response.status });
+            throw new Error('Failed to get AI move');
+          }
+
+          data = await response.json();
+          console.log('[Client] AI move received', { from: data.move?.from, to: data.move?.to, reasoning: data.reasoning });
+        } catch (err) {
+          clearTimeout(timeoutId);
+          console.warn('[Client] Fetch failed, triggering fallback', { error: err instanceof Error ? err.message : String(err) });
+          throw err;
         }
-
-        const data = await response.json();
         
         if (data.move) {
           const aiMove: Move = {
@@ -93,21 +108,26 @@ export default function Home() {
             capturedPiece: gameState.board[data.move.to],
           };
           
-          console.log('AI reasoning:', data.reasoning);
+          console.log('[Client] Applying move', aiMove);
           
           const newState = applyMove(gameState, aiMove);
           setGameState(newState);
           setLastMove(aiMove);
         }
       } catch (error) {
-        console.error('Error getting AI move:', error);
+        console.error('[Client] Error in AI flow, using local fallback:', error);
         // Fallback to local AI if API fails
-        const { getBestMove } = await import('./lib/chessAI');
-        const aiMove = getBestMove(gameState, difficulty);
-        if (aiMove) {
-          const newState = applyMove(gameState, aiMove);
-          setGameState(newState);
-          setLastMove(aiMove);
+        try {
+          const { getBestMove } = await import('./lib/chessAI');
+          const aiMove = getBestMove(gameState, difficulty);
+          if (aiMove) {
+            console.log('[Client] Fallback move applied', aiMove);
+            const newState = applyMove(gameState, aiMove);
+            setGameState(newState);
+            setLastMove(aiMove);
+          }
+        } catch (fallbackErr) {
+          console.error('[Client] Fallback also failed:', fallbackErr);
         }
       } finally {
         setIsAIThinking(false);

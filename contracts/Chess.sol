@@ -623,7 +623,8 @@ contract Chess {
             address winner = game.state == GameState.WhiteWon ? game.whitePlayer : game.blackPlayer;
             uint256 payout = game.wager * 2;
             game.wager = 0;
-            payable(winner).transfer(payout);
+            (bool success, ) = payable(winner).call{value: payout}("");
+            require(success, "Payout failed");
         }
     }
     
@@ -632,8 +633,10 @@ contract Chess {
         if (game.wager > 0) {
             uint256 refund = game.wager;
             game.wager = 0;
-            payable(game.whitePlayer).transfer(refund);
-            payable(game.blackPlayer).transfer(refund);
+            (bool successWhite, ) = payable(game.whitePlayer).call{value: refund}("");
+            require(successWhite, "White refund failed");
+            (bool successBlack, ) = payable(game.blackPlayer).call{value: refund}("");
+            require(successBlack, "Black refund failed");
         }
     }
     

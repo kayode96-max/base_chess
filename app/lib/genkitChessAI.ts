@@ -8,6 +8,12 @@ import {
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
+interface MoveData {
+  from: number;
+  to: number;
+  reasoning?: string;
+}
+
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
@@ -15,6 +21,8 @@ export async function getGeminiMove(
   gameState: GameState,
   difficulty: Difficulty = 'medium'
 ): Promise<{ from: number; to: number; reasoning?: string }> {
+  console.log('[Gemini] Starting move generation', { difficulty, moveNum: gameState.fullMoveNumber });
+  const startTime = Date.now();
   const legalMoves = generateLegalMoves(gameState);
 
   if (legalMoves.length === 0) {
@@ -38,10 +46,28 @@ export async function getGeminiMove(
     // Call Gemini
     const result = await model.generateContent(prompt);
     const response = result.response;
-    const text = response.text();
+    const text = typeof response?.text === 'function' ? await response.text() : String(response ?? '');
+    console.log('[Gemini] Response received', { elapsed: `${Date.now() - startTime}ms` });
 
-    // Parse JSON response
-    const moveData = JSON.parse(text);
+    // Parse JSON response (robust to extra text)
+    let moveData: MoveData;
+    try {
+      moveData = JSON.parse(text);
+    } catch {
+      // Try to extract JSON substring if model added extraneous text
+      const firstBrace = text.indexOf('{');
+      const lastBrace = text.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        const jsonSubstring = text.slice(firstBrace, lastBrace + 1);
+        try {
+          moveData = JSON.parse(jsonSubstring);
+        } catch {
+          throw new Error('Failed to parse Gemini JSON response');
+        }
+      } else {
+        throw new Error('Failed to parse Gemini JSON response');
+      }
+    }
 
     // Validate the move is legal
     const selectedMove = legalMoves.find(
@@ -50,7 +76,7 @@ export async function getGeminiMove(
 
     if (!selectedMove) {
       // Fallback to a random legal move if Gemini suggests an illegal move
-      console.warn('Gemini suggested illegal move, selecting random legal move');
+      console.warn('[Gemini] Illegal move suggested, selecting random legal move', { suggested: moveData, elapsed: `${Date.now() - startTime}ms` });
       const randomMove = legalMoves[Math.floor(Math.random() * legalMoves.length)];
       return {
         from: randomMove.from,
@@ -59,13 +85,16 @@ export async function getGeminiMove(
       };
     }
 
+    console.log('[Gemini] Valid move selected', { elapsed: `${Date.now() - startTime}ms` });
+
     return {
       from: selectedMove.from,
       to: selectedMove.to,
       reasoning: moveData.reasoning,
     };
   } catch (error) {
-    console.error('Error calling Gemini:', error);
+    const elapsed = Date.now() - startTime;
+    console.error('[Gemini] Error', { elapsed: `${elapsed}ms`, error });
     // Fallback to random move
     const randomMove = legalMoves[Math.floor(Math.random() * legalMoves.length)];
     return {
@@ -167,7 +196,7 @@ function indexToSquare(index: number): string {
 }
 
 function getCastlingRights(gameState: GameState): string {
-  const rights = [];
+  const rights: string[] = [];
   if (gameState.castlingRights.whiteKingside) rights.push('White O-O');
   if (gameState.castlingRights.whiteQueenside) rights.push('White O-O-O');
   if (gameState.castlingRights.blackKingside) rights.push('Black O-O');
