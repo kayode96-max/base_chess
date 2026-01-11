@@ -492,5 +492,100 @@ export const CHESS_PUZZLES_ABI = [
     ],
     outputs: [{ name: "", type: "bool" }],
     stateMutability: "view"
+  },
+  {
+    type: "function",
+    name: "getDailyRankings",
+    inputs: [{ name: "day", type: "uint256" }],
+    outputs: [
+      {
+        name: "",
+        type: "tuple[]",
+        components: [
+          { name: "player", type: "address" },
+          { name: "score", type: "uint256" },
+          { name: "puzzlesSolved", type: "uint256" },
+          { name: "avgTime", type: "uint256" }
+        ]
+      }
+    ],
+    stateMutability: "view"
+  },
+  {
+    type: "function",
+    name: "getPlayerDailyScore",
+    inputs: [
+      { name: "day", type: "uint256" },
+      { name: "player", type: "address" }
+    ],
+    outputs: [
+      { name: "score", type: "uint256" },
+      { name: "puzzlesSolved", type: "uint256" },
+      { name: "avgTime", type: "uint256" }
+    ],
+    stateMutability: "view"
+  },
+  {
+    type: "function",
+    name: "getToday",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view"
+  },
+  {
+    type: "function",
+    name: "getLeaderboardPrizePool",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view"
+  },
+  {
+    type: "function",
+    name: "addPlayerToLeaderboard",
+    inputs: [
+      { name: "day", type: "uint256" },
+      { name: "player", type: "address" }
+    ],
+    outputs: [],
+    stateMutability: "nonpayable"
+  },
+  {
+    type: "function",
+    name: "fundLeaderboardPrizePool",
+    inputs: [],
+    outputs: [],
+    stateMutability: "payable"
+  },
+  {
+    type: "function",
+    name: "distributeDailyRewards",
+    inputs: [{ name: "day", type: "uint256" }],
+    outputs: [],
+    stateMutability: "nonpayable"
+  },
+  {
+    type: "event",
+    name: "DailyScoreUpdated",
+    inputs: [
+      { name: "day", type: "uint256", indexed: true },
+      { name: "player", type: "address", indexed: true },
+      { name: "score", type: "uint256", indexed: false }
+    ]
+  },
+  {
+    type: "event",
+    name: "DailyRewardsDistributed",
+    inputs: [
+      { name: "day", type: "uint256", indexed: true },
+      { name: "totalRewards", type: "uint256", indexed: false }
+    ]
+  },
+  {
+    type: "event",
+    name: "LeaderboardPrizePoolFunded",
+    inputs: [
+      { name: "amount", type: "uint256", indexed: false },
+      { name: "newTotal", type: "uint256", indexed: false }
+    ]
   }
 ] as const;

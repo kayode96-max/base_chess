@@ -176,6 +176,28 @@ export function useChessPuzzles() {
     args: [BigInt(0)], // Default to puzzle 0, can be changed
   });
 
+  // Check if solved
+  const { data: hasSolved } = useReadContract({
+    address: CHESS_PUZZLES_ADDRESS,
+    abi: CHESS_PUZZLES_ABI,
+    functionName: 'hasSolvedPuzzle',
+    args: address ? [address, BigInt(0)] : undefined,
+  });
+
+  // Get today
+  const { data: today } = useReadContract({
+    address: CHESS_PUZZLES_ADDRESS,
+    abi: CHESS_PUZZLES_ABI,
+    functionName: 'getToday',
+  });
+
+  // Get leaderboard prize pool
+  const { data: leaderboardPrizePool } = useReadContract({
+    address: CHESS_PUZZLES_ADDRESS,
+    abi: CHESS_PUZZLES_ABI,
+    functionName: 'getLeaderboardPrizePool',
+  });
+
   // Create puzzle
   const createPuzzle = async (
     fen: string,
@@ -204,21 +226,73 @@ export function useChessPuzzles() {
     });
   };
 
-  // Check if solved
-  const { data: hasSolved } = useReadContract({
-    address: CHESS_PUZZLES_ADDRESS,
-    abi: CHESS_PUZZLES_ABI,
-    functionName: 'hasSolvedPuzzle',
-    args: address ? [address, BigInt(0)] : undefined,
-  });
+  // Get daily rankings - returns a function to fetch with specific day
+  const getDailyRankings = (day: number | bigint) => {
+    const { data } = useReadContract({
+      address: CHESS_PUZZLES_ADDRESS,
+      abi: CHESS_PUZZLES_ABI,
+      functionName: 'getDailyRankings',
+      args: [BigInt(day)],
+    });
+    return data;
+  };
+
+  // Get player daily score
+  const getPlayerDailyScore = (day: number | bigint) => {
+    const { data } = useReadContract({
+      address: CHESS_PUZZLES_ADDRESS,
+      abi: CHESS_PUZZLES_ABI,
+      functionName: 'getPlayerDailyScore',
+      args: [BigInt(day), address],
+    });
+    return data;
+  };
+
+  // Add player to leaderboard
+  const addPlayerToLeaderboard = async (day: number) => {
+    if (!address) return;
+    return writeContract({
+      address: CHESS_PUZZLES_ADDRESS,
+      abi: CHESS_PUZZLES_ABI,
+      functionName: 'addPlayerToLeaderboard',
+      args: [BigInt(day), address],
+    });
+  };
+
+  // Fund leaderboard prize pool
+  const fundLeaderboardPrizePool = async (value: bigint) => {
+    return writeContract({
+      address: CHESS_PUZZLES_ADDRESS,
+      abi: CHESS_PUZZLES_ABI,
+      functionName: 'fundLeaderboardPrizePool',
+      value,
+    });
+  };
+
+  // Distribute daily rewards
+  const distributeDailyRewards = async (day: number) => {
+    return writeContract({
+      address: CHESS_PUZZLES_ADDRESS,
+      abi: CHESS_PUZZLES_ABI,
+      functionName: 'distributeDailyRewards',
+      args: [BigInt(day)],
+    });
+  };
 
   return {
     puzzleStats,
     puzzle,
     hasSolved,
+    today,
+    leaderboardPrizePool,
     createPuzzle,
     attemptPuzzle,
     refetchPuzzle,
+    getDailyRankings,
+    getPlayerDailyScore,
+    addPlayerToLeaderboard,
+    fundLeaderboardPrizePool,
+    distributeDailyRewards,
     isLoading,
     isSuccess,
   };

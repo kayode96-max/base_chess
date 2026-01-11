@@ -17,8 +17,23 @@ import {
 } from '../lib/puzzleData';
 import styles from './PuzzleTraining.module.css';
 
+interface DailyScore {
+  player: string;
+  score: number;
+  puzzlesSolved: number;
+  avgTime: number;
+}
+
 export default function PuzzleTraining() {
-  const { puzzleStats, attemptPuzzle } = useChessPuzzles();
+  const { 
+    puzzleStats, 
+    attemptPuzzle,
+    today,
+    leaderboardPrizePool,
+    getDailyRankings,
+    getPlayerDailyScore,
+    addPlayerToLeaderboard
+  } = useChessPuzzles();
   
   const [currentPuzzle, setCurrentPuzzle] = useState<ChessPuzzle | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -30,6 +45,13 @@ export default function PuzzleTraining() {
   const [attempts, setAttempts] = useState(0);
   const [playerRating, setPlayerRating] = useState(1500);
   const [localStats, setLocalStats] = useState({ solved: 0, attempted: 0, streak: 0 });
+  const [dailyRankings, setDailyRankings] = useState<DailyScore[]>([]);
+  const [playerDailyScore, setPlayerDailyScore] = useState({ score: 0, puzzles: 0, avgTime: 0 });
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  
+  // Use hook data directly for today and prize pool
+  const currentDay = today ? Number(today) : 0;
+  const currentPrizePool = leaderboardPrizePool ? leaderboardPrizePool.toString() : '0';
 
 
   // Load local stats from localStorage
@@ -50,8 +72,38 @@ export default function PuzzleTraining() {
   // Load initial puzzle
   useEffect(() => {
     loadNewPuzzle();
+    loadDailyLeaderboard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Load daily leaderboard
+  const loadDailyLeaderboard = async () => {
+    try {
+      if (currentDay > 0) {
+        const rankings = getDailyRankings(currentDay);
+        if (rankings && Array.isArray(rankings)) {
+          const formattedRankings = rankings.map((r: any) => ({
+            player: r.player,
+            score: Number(r.score),
+            puzzlesSolved: Number(r.puzzlesSolved),
+            avgTime: Number(r.avgTime)
+          }));
+          setDailyRankings(formattedRankings);
+        }
+        
+        const score = getPlayerDailyScore(currentDay);
+        if (score && Array.isArray(score)) {
+          setPlayerDailyScore({
+            score: Number(score[0]),
+            puzzles: Number(score[1]),
+            avgTime: Number(score[2])
+          });
+        }
+      }
+    } catch (error) {
+      console.log('Could not load leaderboard:', error);
+    }
+  };
 
   const loadNewPuzzle = () => {
     let puzzle: ChessPuzzle | undefined;
@@ -170,6 +222,14 @@ export default function PuzzleTraining() {
           currentPuzzle.moves, 
           timeSpent
         );
+        
+        // Update player on leaderboard after solving
+        if (addPlayerToLeaderboard && currentDay) {
+          await addPlayerToLeaderboard(currentDay);
+        }
+        
+        // Reload leaderboard
+        loadDailyLeaderboard();
       }
     } catch (error) {
       console.log('Blockchain submission skipped:', error);
@@ -292,16 +352,95 @@ export default function PuzzleTraining() {
 
       <div className={styles.dailyChallenge}>
         <div className={styles.challengeHeader}>
-          <h2>🏆 Daily Challenge</h2>
-          <span className={styles.timer}>Resets in: 23:42:15</span>
+          <h2>🏆 Daily Leaderboard</h2>
+          <button 
+            className={styles.toggleButton}
+            onClick={() => setShowLeaderboard(!showLeaderboard)}
+          >
+            {showLeaderboard ? '▼' : '▶'} {showLeaderboard ? 'Hide' : 'Show'}
+          </button>
         </div>
-        <p>Solve today&apos;s puzzle and compete for rewards!</p>
-        <div className={styles.prizePool}>
-          Prize Pool: <strong>0.1 ETH</strong>
+        
+        <div className={styles.prizeInfo}>
+          <div className={styles.prizePool}>
+            Daily Prize Pool: <strong>{(parseFloat(currentPrizePool) / 1e18).toFixed(4)} ETH</strong>
+          </div>
+          <div className={styles.playerScore}>
+            Your Score Today: <strong>{playerDailyScore.score}</strong> 
+            ({playerDailyScore.puzzles} puzzles)
+          </div>
         </div>
-        <button className={styles.challengeButton}>
-          Start Daily Challenge
-        </button>
+
+        {showLeaderboard && (
+          <div className={styles.leaderboard}>
+            <div className={styles.rewardDistribution}>
+              <h4>Reward Distribution (Top 10)</h4>
+              <div className={styles.distribution}>
+                🥇 1st: 30% | 🥈 2nd: 20% | 🥉 3rd: 15% | 4th: 10% | 5th: 8% | 6th-10th: 2-6%
+              </div>
+            </div>
+            
+            <table className={styles.rankingsTable}>
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Player</th>
+                  <th>Score</th>
+                  <th>Puzzles</th>
+                  <th>Avg Time</th>
+                  <th>Reward</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dailyRankings.length > 0 ? (
+                  dailyRankings.slice(0, 10).map((ranking, index) => {
+                    const rewardPercent = [30, 20, 15, 10, 8, 6, 4, 3, 2, 2][index] || 0;
+                    const rewardAmount = (parseFloat(currentPrizePool) / 1e18) * (rewardPercent / 100);
+                    
+                    return (
+                      <tr key={index} className={index < 3 ? styles.topThree : ''}>
+                        <td>
+                          {index === 0 && '🥇'}
+                          {index === 1 && '🥈'}
+                          {index === 2 && '🥉'}
+                          {index > 2 && `#${index + 1}`}
+                        </td>
+                        <td className={styles.playerAddress}>
+                          {ranking.player.slice(0, 6)}...{ranking.player.slice(-4)}
+                        </td>
+                        <td><strong>{ranking.score}</strong></td>
+                        <td>{ranking.puzzlesSolved}</td>
+                        <td>{ranking.avgTime}s</td>
+                        <td className={styles.reward}>
+                          {rewardAmount.toFixed(4)} ETH
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={6} className={styles.noData}>
+                      No rankings yet today. Solve puzzles to get on the leaderboard!
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            
+            <div className={styles.leaderboardActions}>
+              <button 
+                className={styles.refreshButton}
+                onClick={loadDailyLeaderboard}
+              >
+                🔄 Refresh Leaderboard
+              </button>
+            </div>
+          </div>
+        )}
+        
+        <p className={styles.note}>
+          Solve puzzles to earn points! The top 10 players each day share the 0.1 ETH prize pool.
+        </p>
       </div>
     </div>
   );

@@ -306,3 +306,143 @@
   font-size: 1.25rem;
   color: #6b7280;
 }
+
+/* Leaderboard Styles */
+.toggleButton {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggleButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.prizeInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.playerScore {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.leaderboard {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.rewardDistribution {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.rewardDistribution h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+}
+
+.distribution {
+  font-size: 0.875rem;
+  opacity: 0.95;
+}
+
+.rankingsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.rankingsTable thead {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.rankingsTable th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rankingsTable td {
+  padding: 1rem 0.75rem;
+  color: #1f2937;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.rankingsTable tbody tr:hover {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.topThree {
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.1) 0%, rgba(255, 255, 255, 0) 100%) !important;
+}
+
+.playerAddress {
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.reward {
+  font-weight: 600;
+  color: #10b981;
+}
+
+.noData {
+  text-align: center;
+  padding: 2rem !important;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.leaderboardActions {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.refreshButton {
+  background: rgba(255, 255, 255, 0.9);
+  color: #f59e0b;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refreshButton:hover {
+  background: white;
+  transform: translateY(-1px);
+}
+
+.note {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  text-align: center;
+  opacity: 0.9;
+}
