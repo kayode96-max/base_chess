@@ -56,15 +56,38 @@ contract ChessPuzzles {
         uint256 prizePool;
     }
     
+    struct DailyScore {
+        address player;
+        uint256 score;
+        uint256 puzzlesSolved;
+        uint256 avgTime;
+    }
+    
+    struct DailyLeaderboard {
+        uint256 day;
+        DailyScore[] rankings;
+        mapping(address => uint256) playerScores;
+        mapping(address => uint256) playerPuzzleCount;
+        mapping(address => uint256) playerTotalTime;
+        bool rewardsDistributed;
+        uint256 prizePool;
+    }
+    
     // State variables
     mapping(uint256 => Puzzle) public puzzles;
     mapping(address => PlayerPuzzleStats) private playerStats;
     mapping(uint256 => Attempt[]) public puzzleAttempts;
     mapping(uint256 => DailyChallenge) public dailyChallenges;
+    mapping(uint256 => DailyLeaderboard) public dailyLeaderboards;
     
     uint256 public puzzleCounter;
     uint256 public attemptCounter;
     address public admin;
+    uint256 public constant DAILY_PRIZE_POOL = 0.1 ether;
+    uint256 public leaderboardPrizePool;
+    
+    // Top 10 players get rewards
+    uint256[] public rewardDistribution = [30, 20, 15, 10, 8, 6, 4, 3, 2, 2]; // Percentage distribution
     
     // Rating constants
     uint256 constant K_FACTOR = 32; // ELO K-factor
@@ -79,6 +102,9 @@ contract ChessPuzzles {
     event DailyChallengeCreated(uint256 indexed challengeId, uint256 indexed puzzleId, uint256 prizePool);
     event DailyChallengeCompleted(uint256 indexed challengeId, address indexed player);
     event RewardClaimed(uint256 indexed puzzleId, address indexed player, uint256 amount);
+    event DailyScoreUpdated(uint256 indexed day, address indexed player, uint256 score);
+    event DailyRewardsDistributed(uint256 indexed day, uint256 totalRewards);
+    event LeaderboardPrizePoolFunded(uint256 amount, uint256 newTotal);
     
     modifier onlyAdmin() {
         require(msg.sender == admin, "Only admin");
@@ -193,6 +219,9 @@ contract ChessPuzzles {
         
         // Update streak
         updateStreak(msg.sender);
+        
+        // Update daily score
+        updateDailyScore(puzzleId, timeSpent);
         
         // Calculate and distribute reward
         uint256 reward = calculateReward(puzzleId, timeSpent, stats.attemptCounts[puzzleId]);
@@ -440,5 +469,176 @@ contract ChessPuzzles {
      */
     function deactivatePuzzle(uint256 puzzleId) external onlyAdmin {
         puzzles[puzzleId].isActive = false;
+    }
+    
+    /**
+     * @dev Update daily score for player
+     */
+    function updateDailyScore(uint256 puzzleId, uint256 timeSpent) internal {
+        uint256 today = block.timestamp / 1 days;
+        DailyLeaderboard storage leaderboard = dailyLeaderboards[today];
+        
+        if (leaderboard.day == 0) {
+            leaderboard.day = today;
+            leaderboard.prizePool = DAILY_PRIZE_POOL;
+        }
+        
+        Puzzle storage puzzle = puzzles[puzzleId];
+        
+        // Calculate score based on puzzle difficulty and time
+        uint256 baseScore = puzzle.rating / 10; // Use puzzle rating as base
+        uint256 timeBonus = 0;
+        
+        if (timeSpent < 30) timeBonus = 100;
+        else if (timeSpent < 60) timeBonus = 75;
+        else if (timeSpent < 120) timeBonus = 50;
+        else if (timeSpent < 300) timeBonus = 25;
+        
+        uint256 score = baseScore + timeBonus;
+        
+        leaderboard.playerScores[msg.sender] += score;
+        leaderboard.playerPuzzleCount[msg.sender]++;
+        leaderboard.playerTotalTime[msg.sender] += timeSpent;
+        
+        emit DailyScoreUpdated(today, msg.sender, leaderboard.playerScores[msg.sender]);
+    }
+    
+    /**
+     * @dev Build daily rankings (should be called periodically)
+     */
+    function updateDailyRankings(uint256 day) external {
+        DailyLeaderboard storage leaderboard = dailyLeaderboards[day];
+        require(leaderboard.day == day, "No leaderboard for this day");
+        
+        // Clear existing rankings
+        delete leaderboard.rankings;
+        
+        // This would need an off-chain component to track all players
+        // For now, we'll just update when called with known players
+    }
+    
+    /**
+     * @dev Add player to daily leaderboard (can be called by anyone to update rankings)
+     */
+    function addPlayerToLeaderboard(uint256 day, address player) external {
+        DailyLeaderboard storage leaderboard = dailyLeaderboards[day];
+        require(leaderboard.day == day, "Invalid day");
+        require(leaderboard.playerScores[player] > 0, "Player has no score");
+        
+        uint256 playerCount = leaderboard.playerPuzzleCount[player];
+        uint256 avgTime = playerCount > 0 ? leaderboard.playerTotalTime[player] / playerCount : 0;
+        
+        DailyScore memory newScore = DailyScore({
+            player: player,
+            score: leaderboard.playerScores[player],
+            puzzlesSolved: playerCount,
+            avgTime: avgTime
+        });
+        
+        // Insert into rankings (sorted by score)
+        bool inserted = false;
+        for (uint256 i = 0; i < leaderboard.rankings.length; i++) {
+            if (newScore.score > leaderboard.rankings[i].score) {
+                // Shift elements and insert
+                leaderboard.rankings.push(leaderboard.rankings[leaderboard.rankings.length - 1]);
+                for (uint256 j = leaderboard.rankings.length - 1; j > i; j--) {
+                    leaderboard.rankings[j] = leaderboard.rankings[j - 1];
+                }
+                leaderboard.rankings[i] = newScore;
+                inserted = true;
+                break;
+            }
+        }
+        
+        if (!inserted && leaderboard.rankings.length < 100) {
+            leaderboard.rankings.push(newScore);
+        }
+    }
+    
+    /**
+     * @dev Distribute daily rewards to top 10 players
+     */
+    function distributeDailyRewards(uint256 day) external {
+        DailyLeaderboard storage leaderboard = dailyLeaderboards[day];
+        require(leaderboard.day == day, "Invalid day");
+        require(!leaderboard.rewardsDistributed, "Rewards already distributed");
+        require(block.timestamp / 1 days > day, "Day not ended");
+        require(leaderboard.prizePool > 0 || leaderboardPrizePool >= DAILY_PRIZE_POOL, "Insufficient prize pool");
+        
+        uint256 prizePool = leaderboard.prizePool > 0 ? leaderboard.prizePool : DAILY_PRIZE_POOL;
+        
+        // Use available prize pool from contract
+        if (leaderboardPrizePool >= prizePool) {
+            leaderboardPrizePool -= prizePool;
+        } else {
+            prizePool = leaderboardPrizePool;
+            leaderboardPrizePool = 0;
+        }
+        
+        uint256 topPlayersCount = leaderboard.rankings.length < 10 ? leaderboard.rankings.length : 10;
+        uint256 totalDistributed = 0;
+        
+        for (uint256 i = 0; i < topPlayersCount; i++) {
+            address player = leaderboard.rankings[i].player;
+            uint256 reward = (prizePool * rewardDistribution[i]) / 100;
+            
+            playerStats[player].totalRewardsEarned += reward;
+            payable(player).transfer(reward);
+            totalDistributed += reward;
+        }
+        
+        leaderboard.rewardsDistributed = true;
+        
+        emit DailyRewardsDistributed(day, totalDistributed);
+    }
+    
+    /**
+     * @dev Fund the leaderboard prize pool
+     */
+    function fundLeaderboardPrizePool() external payable {
+        require(msg.value > 0, "Must send ETH");
+        leaderboardPrizePool += msg.value;
+        
+        emit LeaderboardPrizePoolFunded(msg.value, leaderboardPrizePool);
+    }
+    
+    /**
+     * @dev Get daily leaderboard rankings
+     */
+    function getDailyRankings(uint256 day) external view returns (DailyScore[] memory) {
+        return dailyLeaderboards[day].rankings;
+    }
+    
+    /**
+     * @dev Get player's daily score
+     */
+    function getPlayerDailyScore(uint256 day, address player) external view returns (
+        uint256 score,
+        uint256 puzzlesSolved,
+        uint256 avgTime
+    ) {
+        DailyLeaderboard storage leaderboard = dailyLeaderboards[day];
+        uint256 count = leaderboard.playerPuzzleCount[player];
+        uint256 avg = count > 0 ? leaderboard.playerTotalTime[player] / count : 0;
+        
+        return (
+            leaderboard.playerScores[player],
+            count,
+            avg
+        );
+    }
+    
+    /**
+     * @dev Get today's day number
+     */
+    function getToday() external view returns (uint256) {
+        return block.timestamp / 1 days;
+    }
+    
+    /**
+     * @dev Get leaderboard prize pool balance
+     */
+    function getLeaderboardPrizePool() external view returns (uint256) {
+        return leaderboardPrizePool;
     }
 }
