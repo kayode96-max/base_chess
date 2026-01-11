@@ -93,6 +93,13 @@ async function main() {
   );
   console.log("Created sample puzzle");
 
+  // Fund the daily leaderboard prize pool
+  console.log("\n5. Funding daily leaderboard prize pool...");
+  await puzzles.fundLeaderboardPrizePool({
+    value: hre.ethers.parseEther("0.5") // Initial 0.5 ETH funding (5 days worth)
+  });
+  console.log("Funded leaderboard prize pool with 0.5 ETH");
+
   console.log("\n✅ Deployment complete!");
   console.log("\n📝 Contract Addresses:");
   console.log("ChessAcademy:", academyAddress);
