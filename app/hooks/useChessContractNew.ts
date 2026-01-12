@@ -235,6 +235,11 @@ export function useChessContract() {
 
     try {
       const addresses = getAddresses();
+      
+      // Check if contract address is valid (not zero address)
+      if (addresses.chess === '0x0000000000000000000000000000000000000000') {
+        throw new Error('Chess contract not deployed. Please configure contract environment variables.');
+      }
 
       const result = await publicClient.readContract({
         address: addresses.chess,
@@ -268,6 +273,11 @@ export function useChessContract() {
 
     try {
       const addresses = getAddresses();
+      
+      // Check if contract address is valid (not zero address)
+      if (addresses.chess === '0x0000000000000000000000000000000000000000') {
+        throw new Error('Chess contract not deployed. Please configure contract environment variables.');
+      }
 
       const board = await publicClient.readContract({
         address: addresses.chess,
@@ -286,17 +296,27 @@ export function useChessContract() {
   // Get all open games
   const getOpenGames = useCallback(async (): Promise<OpenGame[]> => {
     if (!publicClient) {
-      return [];
+      throw new Error('Public client not available');
     }
 
     try {
       const addresses = getAddresses();
+      
+      // Check if contract address is valid (not zero address)
+      if (addresses.chessFactory === '0x0000000000000000000000000000000000000000') {
+        throw new Error('Chess Factory contract not deployed. Please configure NEXT_PUBLIC_CHESS_FACTORY_ADDRESS_SEPOLIA environment variable.');
+      }
 
-      const games = await publicClient.readContract({
-        address: addresses.chessFactory,
-        abi: CHESS_FACTORY_ABI,
-        functionName: 'getOpenGames',
-      }) as readonly { gameId: bigint; creator: string; wager: bigint; timestamp: bigint; filled: boolean }[];
+      const games = await Promise.race([
+        publicClient.readContract({
+          address: addresses.chessFactory,
+          abi: CHESS_FACTORY_ABI,
+          functionName: 'getOpenGames',
+        }) as Promise<readonly { gameId: bigint; creator: string; wager: bigint; timestamp: bigint; filled: boolean }[]>,
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Contract call timed out')), 5000)
+        )
+      ]);
 
       return games.map(game => ({
         gameId: Number(game.gameId),
@@ -306,8 +326,9 @@ export function useChessContract() {
         filled: game.filled,
       }));
     } catch (err: unknown) {
-      console.error('Failed to get open games:', err);
-      return [];
+      const errorMsg = err instanceof Error ? err.message : 'Failed to get open games';
+      console.error('Failed to get open games:', errorMsg);
+      throw err;
     }
   }, [publicClient, getAddresses]);
 
@@ -324,6 +345,11 @@ export function useChessContract() {
 
     try {
       const addresses = getAddresses();
+      
+      // Check if contract address is valid (not zero address)
+      if (addresses.chess === '0x0000000000000000000000000000000000000000') {
+        throw new Error('Chess contract not deployed. Please configure contract environment variables.');
+      }
 
       const gameIds = await publicClient.readContract({
         address: addresses.chess,

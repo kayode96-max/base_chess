@@ -44,7 +44,8 @@ export default function GameLobbyOnline({ onBack, onJoinGame }: GameLobbyOnlineP
       setOpenGames(filteredGames);
     } catch (err) {
       console.error('Error loading games:', err);
-      setError('Failed to load open games');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to load open games';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
