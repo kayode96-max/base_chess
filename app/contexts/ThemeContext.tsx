@@ -3,6 +3,13 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 
 export type ThemeName = 'classic' | 'ocean' | 'forest' | 'sunset' | 'midnight' | 'royal';
 
+// Helper function to convert hex to RGB
+function hexToRgb(hex: string): string {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return '0, 0, 0';
+  return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`;
+}
+
 export interface Theme {
   name: ThemeName;
   displayName: string;
@@ -202,6 +209,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.style.setProperty('--success', theme.success);
     root.style.setProperty('--error', theme.error);
     root.style.setProperty('--warning', theme.warning);
+    
+    // Log for debugging
+    console.log('Theme applied:', currentTheme.name, theme);
   }, [currentTheme]);
 
   const setTheme = (name: ThemeName) => {

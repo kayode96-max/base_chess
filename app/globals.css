@@ -2,6 +2,22 @@
   :root {
     --background: #ffffff;
     --foreground: #171717;
+    /* Default theme (Classic) */
+    --primary-bg: #1a1a2e;
+    --secondary-bg: #16213e;
+    --accent-bg: #0f3460;
+    --light-square: #f0d9b5;
+    --dark-square: #b58863;
+    --primary: #667eea;
+    --secondary: #764ba2;
+    --accent: #f093fb;
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --success: #10b981;
+    --error: #ef4444;
+    --warning: #f59e0b;
   }
 
   @media (prefers-color-scheme: dark) {
