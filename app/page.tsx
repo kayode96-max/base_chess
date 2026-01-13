@@ -1,14 +1,14 @@
 "use client";
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import ChessBoard from './components/ChessBoardNew';
-import GameControls from './components/GameControls';
-import MoveHistory from './components/MoveHistory';
-import GameLobbyOnline from './components/GameLobbyOnline';
-import OnlineGame from './components/OnlineGame';
-import LearningDashboard from './components/LearningDashboard';
-import CoachMarketplace from './components/CoachMarketplace';
-import PuzzleTraining from './components/PuzzleTraining';
-import ThemeSwitcher from './components/ThemeSwitcher';
+import ChessBoard from './components/chess/ChessBoardNew';
+import GameControls from './components/features/GameControls';
+import MoveHistory from './components/features/MoveHistory';
+import GameLobbyOnline from './components/features/GameLobbyOnline';
+import OnlineGame from './components/features/OnlineGame';
+import LearningDashboard from './components/features/LearningDashboard';
+import CoachMarketplace from './components/features/CoachMarketplace';
+import PuzzleTraining from './components/features/PuzzleTraining';
+import ThemeSwitcher from './components/ui/ThemeSwitcher';
 import {
   createInitialState,
   makeMove as applyMove,
