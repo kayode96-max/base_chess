@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { useChessPuzzles } from '../../hooks/useAdvancedContracts';
 import PuzzleBoard from '../chess/PuzzleBoard';
