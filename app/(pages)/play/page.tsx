@@ -5,13 +5,12 @@ import { useState } from 'react';
 import MobileAppLayout from '../../components/common/MobileAppLayout';
 import ChessBoard from '../../components/chess/ChessBoardNew';
 import GameControls from '../../components/features/GameControls';
-import { createInitialState, GameState, Move, GameStatus } from '../../lib/chessEngine';
+import { createInitialState, GameState } from '../../lib/chessEngine';
 
 export default function PlayPage() {
   // Game state for demo (replace with real logic as needed)
   const [gameState, setGameState] = useState<GameState>(createInitialState());
   const [isPlayerWhite, setIsPlayerWhite] = useState(true);
-  const [lastMove, setLastMove] = useState<Move | null>(null);
 
   // Demo player/opponent info
   const player = {
@@ -75,7 +74,7 @@ export default function PlayPage() {
             onMove={() => {}}
             isPlayerWhite={isPlayerWhite}
             disabled={false}
-            lastMove={lastMove}
+            lastMove={null}
             showCoordinates={false}
             highlightLegalMoves={true}
           />
