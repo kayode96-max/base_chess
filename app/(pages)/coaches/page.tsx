@@ -1,3 +1,5 @@
+'use client';
+
 import MobileAppLayout from '../../components/common/MobileAppLayout';
 import CoachMarketplace from '../../components/features/CoachMarketplace';
 
