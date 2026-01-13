@@ -1,24 +1,6 @@
 "use client";
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import ChessBoard from './components/chess/ChessBoardNew';
-import GameControls from './components/features/GameControls';
-import MoveHistory from './components/features/MoveHistory';
-import GameLobbyOnline from './components/features/GameLobbyOnline';
-import OnlineGame from './components/features/OnlineGame';
-import LearningDashboard from './components/features/LearningDashboard';
-import CoachMarketplace from './components/features/CoachMarketplace';
-import PuzzleTraining from './components/features/PuzzleTraining';
-import ThemeSwitcher from './components/ui/ThemeSwitcher';
-import {
-  createInitialState,
-  makeMove as applyMove,
-  undoMove,
-  GameState,
-  Move,
-  GameStatus,
-} from './lib/chessEngine';
-import { Difficulty } from './lib/genkitChessAI';
-import styles from './page.module.css';
+import { useState } from 'react';
+import MobileAppLayout from './components/common/MobileAppLayout';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -38,26 +20,61 @@ const SECTION_CONFIG = [
 ];
 
 export default function Home() {
-  const [gameMode, setGameMode] = useState<GameMode>('single-player');
-  const [gameState, setGameState] = useState<GameState>(createInitialState());
-  const [isPlayerWhite, setIsPlayerWhite] = useState(true);
-  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
-  const [lastMove, setLastMove] = useState<Move | null>(null);
-  const [isAIThinking, setIsAIThinking] = useState(false);
-  const [boardFlipped, setBoardFlipped] = useState(false);
-  const [onlineGameId, setOnlineGameId] = useState<number | null>(null);
-  const [onlineView, setOnlineView] = useState<OnlineView>('lobby');
-  const [activeSection, setActiveSection] = useState<string>(SECTION_CONFIG[0].id);
+  // Placeholder: In a real app, fetch user/game data here
+  const user = {
+    name: 'Grandmaster_X',
+    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBxm0DC_HC0y6kB_rdUul_DvCqMGnpAZPZlYh_9xgia4eRcM-al3SRxRSp37Juxg2mWo2yqtdBwzs-Iygf_mWrczrUDgZVcxBrplsHaLcFsB8SuAkwRQdLQN1p45297MXBdEvDJUzNs-aSSIfar6G0HfujKAK8Tkr4xL3SPMkn-eh8BmgmsbLuKCm7-Dm_ZcbfDNhK_MjmURk5YG7jYvOKlga5gt0rppt9WtXrflHinXOQWb7c4UIwVAfHyWZMrHRFZ4hWYnz0QFw3q',
+    rating: 2450,
+    eth: 0.428,
+    usdc: 1250.0,
+    network: 'Base Network',
+    ratingChange: 12,
+    gwei: 12,
+  };
 
-  const isAITurn = gameMode === 'single-player' && gameState.isWhiteTurn !== isPlayerWhite;
-  const isGameOver = gameState.status === GameStatus.Checkmate ||
-    gameState.status === GameStatus.Stalemate ||
-    gameState.status === GameStatus.Draw;
-
-
-
-  useEffect(() => {
-    if (!isAITurn || isGameOver || isAIThinking) return;
+  return (
+    <MobileAppLayout>
+      {/* Main Performance Card */}
+      <div className="px-4 py-2">
+        <div className="relative overflow-hidden bg-cover bg-center flex flex-col items-stretch justify-end rounded-xl pt-12 shadow-2xl border border-white/10" style={{backgroundImage: `linear-gradient(180deg, rgba(16, 22, 34, 0.2) 0%, rgba(19, 91, 236, 0.6) 100%), url('https://lh3.googleusercontent.com/aida-public/AB6AXuBtZSuTThR1uSA4hURTeXWxQ7gcbymuajjQBiuc2p3ETig7j1D8R-6XpI2hDgXOsy-S9MJmTJ_5AE-f2ScuDSRyul4n4clCzQonhbicx8ll06l-WdW6bwMQDVzePfMWdP9V-aw5fIiGV0UZLu_5j85-zdYOuwknYT_qxLsVsT5_nHlO17V90XVhwsSumtQr3DLrpuSGPzLbXhijSA6JeDHEOi3gFQtQO77EW4WgMbNzuCzu6_7TOaU3lNsJIFpxSq7lnO-2GZKI6idq')`}}>
+          <div className="absolute top-4 right-4">
+            <div className="bg-black/30 backdrop-blur-md px-2 py-1 rounded-lg flex items-center gap-2 border border-white/10">
+              <span className="material-symbols-outlined text-primary text-sm" style={{fontVariationSettings: '"FILL" 1'}}>local_gas_station</span>
+              <span className="text-[10px] font-bold">{user.gwei} Gwei</span>
+            </div>
+          </div>
+          <div className="flex flex-col gap-4 p-5">
+            <div className="flex justify-between items-end">
+              <div className="flex flex-col gap-1">
+                <p className="text-white/70 text-xs font-semibold uppercase tracking-widest">Base Rating</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-white tracking-tight text-4xl font-extrabold leading-tight">{user.rating.toLocaleString()}</p>
+                  <span className="text-green-400 text-sm font-bold flex items-center">
+                    <span className="material-symbols-outlined text-sm">arrow_upward</span>{user.ratingChange}
+                  </span>
+                </div>
+              </div>
+              <button className="flex min-w-[84px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-white text-primary text-sm font-bold shadow-lg">
+                <span className="truncate">Analytics</span>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/10">
+              <div className="flex flex-col gap-1">
+                <p className="text-white/60 text-[10px] font-bold uppercase">ETH Balance</p>
+                <p className="text-white text-lg font-bold">{user.eth} ETH</p>
+              </div>
+              <div className="flex flex-col gap-1">
+                <p className="text-white/60 text-[10px] font-bold uppercase">USDC Balance</p>
+                <p className="text-white text-lg font-bold">{user.usdc.toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* ...add more dashboard sections here as needed... */}
+    </MobileAppLayout>
+  );
+}
 
     setIsAIThinking(true);
 
