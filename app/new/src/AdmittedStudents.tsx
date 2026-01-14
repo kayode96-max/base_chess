@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNotification } from './NotificationContext';
+import { useNotification } from './NotificationContext';
 import './AdmittedStudents.css';
 
 interface Student {
