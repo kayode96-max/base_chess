@@ -15,6 +15,7 @@ import MenstrualCycleMonitor from './MenstrualCycleMonitor';
 import AdvancedEduApp from './AdvancedEduApp';
 import BodyTempDetector from './BodyTempDetector';
 import DeviceTracker from './DeviceTracker';
+import PartnerFinder from './PartnerFinder';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
       <AdvancedEduApp />
       <BodyTempDetector />
       <DeviceTracker />
+      <PartnerFinder />
     </div>
   );
 }
