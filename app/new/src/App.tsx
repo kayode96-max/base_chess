@@ -5,6 +5,7 @@ import UberMoto from './UberMoto';
 import ConnectSupport from './ConnectSupport';
 import KunuMasaRestaurant from './KunuMasaRestaurant';
 import AdmittedStudents from './AdmittedStudents';
+import GameWinToCash from './GameWinToCash';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
       <ConnectSupport />
       <KunuMasaRestaurant />
       <AdmittedStudents />
+      <GameWinToCash />
     </div>
   );
 }
