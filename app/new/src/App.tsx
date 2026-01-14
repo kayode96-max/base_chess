@@ -9,6 +9,7 @@ import GameWinToCash from './GameWinToCash';
 import HomeElectricalGuide from './HomeElectricalGuide';
 import VideoCallApp from './VideoCallApp';
 import UnzipperApp from './UnzipperApp';
+import ForeignCars from './ForeignCars';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
       <HomeElectricalGuide />
       <VideoCallApp />
       <UnzipperApp />
+      <ForeignCars />
     </div>
   );
 }
