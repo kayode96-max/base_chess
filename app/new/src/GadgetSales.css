@@ -1,0 +1,58 @@
+.gadget-sales-app {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 24px;
+  border: 2px solid #6366f1;
+  border-radius: 12px;
+  background: #f5f3ff;
+  font-family: Arial, sans-serif;
+}
+.gadget-sales-app h2 {
+  color: #4338ca;
+}
+.gadgets-section {
+  margin-bottom: 24px;
+}
+.gadgets-list {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.gadget-item {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 12px;
+  width: 150px;
+  text-align: center;
+}
+.gadget-item img {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+  margin-bottom: 8px;
+}
+.gadget-item button {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.cart-section {
+  margin-top: 24px;
+}
+.cart-section ul {
+  list-style: none;
+  padding: 0;
+}
+.cart-section li {
+  margin-bottom: 6px;
+}
+.total {
+  margin-top: 10px;
+  font-weight: bold;
+  color: #4338ca;
+}
