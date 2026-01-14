@@ -6,6 +6,7 @@ import ConnectSupport from './ConnectSupport';
 import KunuMasaRestaurant from './KunuMasaRestaurant';
 import AdmittedStudents from './AdmittedStudents';
 import GameWinToCash from './GameWinToCash';
+import HomeElectricalGuide from './HomeElectricalGuide';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       <KunuMasaRestaurant />
       <AdmittedStudents />
       <GameWinToCash />
+      <HomeElectricalGuide />
     </div>
   );
 }
