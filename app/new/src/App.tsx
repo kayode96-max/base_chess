@@ -1,4 +1,5 @@
 import React from 'react';
+import { NotificationProvider } from './NotificationContext';
 import './App.css';
 import ChessBoard from './ChessBoard';
 import UberMoto from './UberMoto';
@@ -22,28 +23,30 @@ import AndroidCustomizer from './AndroidCustomizer';
 
 function App() {
   return (
-    <div className="App">
-      <h1>Chess App</h1>
-      <ChessBoard />
-      <UberMoto />
-      <ConnectSupport />
-      <KunuMasaRestaurant />
-      <AdmittedStudents />
-      <GameWinToCash />
-      <HomeElectricalGuide />
-      <VideoCallApp />
-      <UnzipperApp />
-      <ForeignCars />
-      <IslamicLoanApp />
-      <MenstrualCycleMonitor />
-      <AdvancedEduApp />
-      <BodyTempDetector />
-      <DeviceTracker />
-      <PartnerFinder />
-      <GadgetSales />
-      <RequestTechnician />
-      <AndroidCustomizer />
-    </div>
+    <NotificationProvider>
+      <div className="App">
+        <h1>Chess App</h1>
+        <ChessBoard />
+        <UberMoto />
+        <ConnectSupport />
+        <KunuMasaRestaurant />
+        <AdmittedStudents />
+        <GameWinToCash />
+        <HomeElectricalGuide />
+        <VideoCallApp />
+        <UnzipperApp />
+        <ForeignCars />
+        <IslamicLoanApp />
+        <MenstrualCycleMonitor />
+        <AdvancedEduApp />
+        <BodyTempDetector />
+        <DeviceTracker />
+        <PartnerFinder />
+        <GadgetSales />
+        <RequestTechnician />
+        <AndroidCustomizer />
+      </div>
+    </NotificationProvider>
   );
 }
 
