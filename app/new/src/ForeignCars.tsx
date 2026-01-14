@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNotification } from './NotificationContext';
 import './ForeignCars.css';
 
 interface Car {
@@ -28,19 +29,18 @@ const accessories: Accessory[] = [
 
 function ForeignCars() {
   const [cart, setCart] = useState<{ name: string; price: number }[]>([]);
-  const [notification, setNotification] = useState('');
+  const { showNotification } = useNotification();
 
   const addToCart = (item: { name: string; price: number }) => {
     setCart([...cart, item]);
-    setNotification(`${item.name} added to cart!`);
-    setTimeout(() => setNotification(''), 2000);
+    showNotification(`${item.name} added to cart!`);
   };
 
   const total = cart.reduce((sum, item) => sum + item.price, 0);
 
   return (
     <div className="foreign-cars-app">
-      {notification && <div className="notification">{notification}</div>}
+      {/* Notification is now global */}
       <h2>Foreign Used Cars</h2>
       <div className="cars-section">
         <h3>Cars for Sale</h3>
