@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNotification } from './NotificationContext';
 import './GadgetSales.css';
 
 interface Gadget {
@@ -15,11 +16,14 @@ const gadgets: Gadget[] = [
   { id: 4, name: 'Smartwatch', price: 45000, image: 'https://via.placeholder.com/120x80?text=Watch' }
 ];
 
+
 function GadgetSales() {
   const [cart, setCart] = useState<Gadget[]>([]);
+  const { showNotification } = useNotification();
 
   const addToCart = (gadget: Gadget) => {
     setCart([...cart, gadget]);
+    showNotification(`${gadget.name} added to cart!`);
   };
 
   const total = cart.reduce((sum, item) => sum + item.price, 0);
