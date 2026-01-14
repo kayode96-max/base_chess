@@ -7,6 +7,7 @@ import KunuMasaRestaurant from './KunuMasaRestaurant';
 import AdmittedStudents from './AdmittedStudents';
 import GameWinToCash from './GameWinToCash';
 import HomeElectricalGuide from './HomeElectricalGuide';
+import VideoCallApp from './VideoCallApp';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
       <AdmittedStudents />
       <GameWinToCash />
       <HomeElectricalGuide />
+      <VideoCallApp />
     </div>
   );
 }
