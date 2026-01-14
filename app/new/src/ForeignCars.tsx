@@ -42,6 +42,7 @@ function ForeignCars() {
         <h3>Cars for Sale</h3>
         <div className="cars-list">
           {cars.map(car => (
+            // eslint-disable-next-line react/jsx-no-comment-textnodes
             <div key={car.id} className="car-item">
               // eslint-disable-next-line @next/next/no-img-element
               <img src={car.image} alt={car.name} />
