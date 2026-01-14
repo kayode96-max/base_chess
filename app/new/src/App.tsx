@@ -13,6 +13,7 @@ import ForeignCars from './ForeignCars';
 import IslamicLoanApp from './IslamicLoanApp';
 import MenstrualCycleMonitor from './MenstrualCycleMonitor';
 import AdvancedEduApp from './AdvancedEduApp';
+import BodyTempDetector from './BodyTempDetector';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
       <IslamicLoanApp />
       <MenstrualCycleMonitor />
       <AdvancedEduApp />
+      <BodyTempDetector />
     </div>
   );
 }
