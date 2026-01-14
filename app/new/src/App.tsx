@@ -12,6 +12,7 @@ import UnzipperApp from './UnzipperApp';
 import ForeignCars from './ForeignCars';
 import IslamicLoanApp from './IslamicLoanApp';
 import MenstrualCycleMonitor from './MenstrualCycleMonitor';
+import AdvancedEduApp from './AdvancedEduApp';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
       <ForeignCars />
       <IslamicLoanApp />
       <MenstrualCycleMonitor />
+      <AdvancedEduApp />
     </div>
   );
 }
