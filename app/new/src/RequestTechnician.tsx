@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNotification } from './NotificationContext';
 import './RequestTechnician.css';
 
 interface Request {
@@ -22,6 +23,7 @@ function RequestTechnician() {
   const [issue, setIssue] = useState('');
   const [technician, setTechnician] = useState('');
   const [requests, setRequests] = useState<Request[]>([]);
+  const { showNotification } = useNotification();
 
   const submitRequest = () => {
     if (!name.trim() || !issue.trim() || !technician.trim()) return;
@@ -38,6 +40,7 @@ function RequestTechnician() {
     setName('');
     setIssue('');
     setTechnician('');
+    showNotification('Technician request submitted!');
   };
 
   const acceptRequest = (id: number) => {
