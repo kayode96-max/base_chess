@@ -10,7 +10,7 @@
   border-radius: 8px;
   color: var(--text-primary, #ffffff);
   font-weight: 500;
-  cursor: pointer;
+  cursor: pointer; 
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
