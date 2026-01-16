@@ -1,6 +1,8 @@
 'use client';
 
 import MobileAppLayout from './components/common/MobileAppLayout';
+import ThemeToggle from './components/ThemeToggle';
+import PlayerComparison from './components/PlayerComparison';
 import Link from 'next/link';
 
 export default function Home() {
@@ -70,10 +72,13 @@ export default function Home() {
               </div>
             </div>
             
-            {/* Streak Badge */}
-            <div className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-200/50 dark:border-amber-700/50">
-              <span className="text-lg">🔥</span>
-              <p className="text-xs font-bold text-amber-900 dark:text-amber-200">{user.streakDays}d</p>
+            {/* Streak Badge & Theme Toggle */}
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-200/50 dark:border-amber-700/50">
+                <span className="text-lg">🔥</span>
+                <p className="text-xs font-bold text-amber-900 dark:text-amber-200">{user.streakDays}d</p>
+              </div>
+              <ThemeToggle />
             </div>
           </div>
 
@@ -253,6 +258,14 @@ export default function Home() {
               </Link>
             </div>
           </div>
+
+          {/* Player Comparison Section */}
+          <PlayerComparison 
+            userRating={user.rating} 
+            bestRating={3200}
+            personalBest={2450}
+            trend={50}
+          />
         </main>
       </div>
     </MobileAppLayout>
