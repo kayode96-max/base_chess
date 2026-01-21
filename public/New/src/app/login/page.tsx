@@ -69,7 +69,7 @@ export default function LoginPage() {
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Don't have a Stacks wallet?{' '}
+              Don&apos;t have a Stacks wallet?{' '}
               <a
                 href="https://www.hiro.so/wallet"
                 target="_blank"
