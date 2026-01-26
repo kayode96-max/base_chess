@@ -595,17 +595,27 @@ contract Chess {
     /**
      * @dev Claim win by timeout
      */
-    function claimTimeout(uint256 gameId) external onlyPlayer(gameId) {
-        Game storage game = games[gameId];
-        require(game.state == GameState.Active, "Game is not active");
-        require(block.timestamp - game.lastMoveTime >= MOVE_TIMEOUT, "Timeout period not reached");
-        
-        bool isWhite = msg.sender == game.whitePlayer;
-        game.state = isWhite ? GameState.WhiteWon : GameState.BlackWon;
-        
-        payoutWinner(gameId);
-        emit GameAbandoned(gameId, msg.sender);
-    }
+  function claimTimeout(uint256 gameId) external onlyPlayer(gameId) {
+    Game storage game = games[gameId];
+    require(game.state == GameState.Active, "Game is not active");
+    require(block.timestamp - game.lastMoveTime >= MOVE_TIMEOUT, "Timeout period not reached");
+
+    //   ONLY the opponent of the player whose turn it is may claim
+    require(
+        (game.whiteTurn && msg.sender == game.blackPlayer) ||
+        (!game.whiteTurn && msg.sender == game.whitePlayer),
+        "Only opponent can claim timeout"
+    );
+
+    game.state = game.whiteTurn
+        ? GameState.BlackWon
+        : GameState.WhiteWon;
+
+    payoutWinner(gameId);
+    emit GameAbandoned(gameId, msg.sender);
+}
+
+
     
     /**
      * @dev Offer/accept draw
