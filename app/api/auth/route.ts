@@ -38,7 +38,7 @@ function getUrlHost(request: NextRequest): string {
 
 export async function GET(request: NextRequest) {
   // Because we're fetching this endpoint via `sdk.quickAuth.fetch`,
-  // if we're in a mini app, the request will include the necessary `Authorization` header.
+  // the request will include the necessary `Authorization` header if required.
   const authorization = request.headers.get("Authorization");
 
   // Here we ensure that we have a valid token.
