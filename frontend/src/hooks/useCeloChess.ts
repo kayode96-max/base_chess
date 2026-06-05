@@ -1,0 +1,190 @@
+import { useEffect, useState } from 'react';
+import { useToaster } from '../components/ui/toasts/ToasterProvider';
+import { useTransactionTracker } from './useTransactionTracker';
+import useAppStore from '../zustand/store';
+import celoService from '../chess/services/celoService';
+import { CELO_CONFIG } from '../chess/blockchainConstants';
+import { isPaymasterAvailable } from '../chess/services/paymasterClient';
+
+export const useCeloChess = () => {
+  const address = useAppStore((state) => state.celoAddress);
+  const miniPayDetected = useAppStore((state) => state.miniPayDetected);
+  const miniPayAccessExpiresAt = useAppStore((state) => state.miniPayAccessExpiresAt);
+  const activeChain = useAppStore((state) => state.activeChain);
+  const { addToast } = useToaster();
+  const { trackTransaction } = useTransactionTracker();
+  const network = CELO_CONFIG;
+
+  const [gasSponsored, setGasSponsored] = useState(celoService.gasSponsored);
+
+  useEffect(() => {
+    isPaymasterAvailable().then((status) => {
+      setGasSponsored(status.available);
+      celoService.gasSponsored = status.available;
+    }).catch(() => {
+      setGasSponsored(false);
+      celoService.gasSponsored = false;
+    });
+  }, []);
+
+  const hasMiniPayAccess =
+    !!miniPayAccessExpiresAt && new Date(miniPayAccessExpiresAt).getTime() > Date.now();
+
+  const ensureEligibleForCeloPlay = () => {
+    if (gasSponsored) return true;
+
+    if ((miniPayDetected || activeChain === 'celo') && !hasMiniPayAccess) {
+      addToast({
+        txId: '',
+        status: 'error',
+        message: 'Unlock daily Celo access before creating or joining a match.',
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const createGame = async (wager: string, isNative: boolean) => {
+    if (!address) return;
+    if (!ensureEligibleForCeloPlay()) return;
+
+    try {
+      const txHash = await celoService.createGame(wager, isNative);
+      
+      addToast({
+        txId: txHash,
+        status: 'success',
+        message: gasSponsored 
+          ? 'Match created! Gas fees sponsored by Chessxu.' 
+          : 'Celo game creation transaction broadcasted'
+      });
+      trackTransaction(txHash, 'Create Game', 'celo');
+      console.log('Celo transaction broadcasted:', txHash);
+      return txHash;
+    } catch (error) {
+      console.error('Error creating Celo game:', error);
+      addToast({
+        txId: '',
+        status: 'error',
+        message: 'Failed to create Celo game'
+      });
+    }
+  };
+
+  const joinGame = async (gameId: number, wager: string, isNative: boolean) => {
+    if (!address) return;
+    if (!ensureEligibleForCeloPlay()) return;
+
+    try {
+      const txHash = await celoService.joinGame(gameId, wager, isNative);
+      
+      addToast({
+        txId: txHash,
+        status: 'success',
+        message: gasSponsored 
+          ? 'Match joined! Gas fees sponsored by Chessxu.' 
+          : 'Celo join game transaction broadcasted'
+      });
+      trackTransaction(txHash, 'Join Game', 'celo');
+      console.log('Celo Join Game transaction broadcasted:', txHash);
+      return txHash;
+    } catch (error) {
+      console.error('Error joining Celo game:', error);
+      addToast({
+        txId: '',
+        status: 'error',
+        message: 'Failed to join Celo game'
+      });
+    }
+  };
+
+  const submitMove = async (gameId: number, move: string, boardState: string) => {
+    if (!address) return;
+
+    try {
+      const txHash = await celoService.submitMove(gameId, move, boardState);
+      
+      addToast({
+        txId: txHash,
+        status: 'success',
+        message: gasSponsored
+          ? 'Move submitted! Zero gas fees applied.'
+          : 'Celo move submission broadcasted'
+      });
+      trackTransaction(txHash, 'Submit Move', 'celo');
+      console.log('Celo move submitted:', txHash);
+      return txHash;
+    } catch (error) {
+      console.error('Error submitting Celo move:', error);
+      addToast({
+        txId: '',
+        status: 'error',
+        message: 'Failed to submit Celo move'
+      });
+    }
+  };
+
+  const resign = async (gameId: number) => {
+    if (!address) return;
+
+    try {
+      const txHash = await celoService.resign(gameId);
+      
+      addToast({
+        txId: txHash,
+        status: 'success',
+        message: gasSponsored
+          ? 'Match resigned. Gas fees sponsored.'
+          : 'Celo resignation transaction broadcasted'
+      });
+      trackTransaction(txHash, 'Resign', 'celo');
+      console.log('Celo resigned:', txHash);
+      return txHash;
+    } catch (error) {
+      console.error('Error resigning Celo game:', error);
+      addToast({
+        txId: '',
+        status: 'error',
+        message: 'Failed to resign Celo game'
+      });
+    }
+  };
+
+  const getGame = async (gameId: number) => {
+    try {
+      const result = await celoService.getGame(gameId);
+      return result;
+    } catch (e) {
+      console.error('Error fetching Celo game:', e);
+      return null;
+    }
+  };
+
+  const getGameStatusString = (status: number) => {
+    switch (status) {
+      case 0: return 'Waiting for Opponent';
+      case 1: return 'Game in Progress';
+      case 2: return 'White Wins';
+      case 3: return 'Black Wins';
+      case 4: return 'Draw';
+      case 5: return 'Cancelled';
+      default: return 'Unknown';
+    }
+  };
+
+  const gasSponsorshipInfo = celoService.getGasSponsorshipInfo();
+
+  return { 
+    address, 
+    network, 
+    createGame, 
+    joinGame, 
+    submitMove, 
+    resign, 
+    getGame, 
+    getGameStatusString, 
+    gasSponsored,
+    gasSponsorshipInfo
+  };
+};
