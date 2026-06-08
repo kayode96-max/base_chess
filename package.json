@@ -16,11 +16,13 @@
     "genkit": "genkit start"
   },
   "dependencies": {
+    "@account-abstraction/contracts": "^0.6.0",
     "@coinbase/onchainkit": "latest",
     "@farcaster/miniapp-sdk": "^0.1.8",
     "@genkit-ai/core": "^1.27.0",
     "@genkit-ai/googleai": "^1.27.0",
     "@google/generative-ai": "^0.24.1",
+    "@openzeppelin/contracts": "^5.6.1",
     "@tanstack/react-query": "^5.81.5",
     "jszip": "^3.10.1",
     "next": "15.3.8",
