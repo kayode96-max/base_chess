@@ -1,0 +1,44 @@
+.popup {
+    right: 0;
+    top: 0;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.popup--inner {
+    width: 90%;
+    max-width: 400px;
+    background: #3e4451 !important; /* Hardcoded fallback in case CSS var is missing */
+    background: var(--game-selection-bg, #3e4451) !important;
+    position: relative;
+    border: none;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    color: #abb2bf;
+    color: var(--text-color, #abb2bf);
+    z-index: 1001;
+}
+.popup--inner__center {
+    left: auto;
+    top: auto;
+    transform: none;
+    text-align: center;
+    padding: 30px 20px;
+}
+
+.popup--inner__center h1 {
+    font-size: 2em;
+    margin: 0 0 15px 0;
+    color: white;
+}
+.popup--inner__center p {
+    font-size: 1.1em;
+    margin: 0 0 20px 0;
+    color: #abb2bf;
+    color: var(--text-color, #abb2bf);
+}
