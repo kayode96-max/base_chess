@@ -1,0 +1,36 @@
+:root {
+    --tile-size : 90px;
+    --light-tile : #94a3b8; /* slate-400 to match app theme */
+    --dark-tile : #334155; /* slate-700 to match app theme */
+    --bg-color : #282c34; /* Darker, more professional background */
+    --app-shadow : 0 10px 20px rgba(0, 0, 0, 0.5);
+    --text-color : #abb2bf;
+    --primary-button-bg : #61afef;
+    --primary-button-hover : #528cbb;
+    --secondary-button-bg : #98c379;
+    --secondary-button-text : #282c34;
+    --secondary-button-bg-hover: #86af6b;
+    --disabled-button-bg : #545862;
+    --disabled-button-text : #abb2bf;
+    --game-selection-bg : #3e4451;
+    --highlight : rgba(168, 85, 247, 0.5); /* Purple-500 highlight to match app accents */
+    --check : #e06c75; /* A subtle red for check */
+}
+
+@media (max-width: 1024px) {
+    :root {
+        --tile-size: min(10vw, 80px);
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --tile-size: min(11vw, 55px);
+    }
+}
+
+@media (max-width: 360px) {
+    :root {
+        --tile-size: 10.5vw;
+    }
+}

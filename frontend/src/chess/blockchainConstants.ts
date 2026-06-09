@@ -1,0 +1,107 @@
+import { CHESSXU_DEPLOYER as SDK_DEPLOYER, CONTRACTS as SDK_CONTRACTS, GAME_STATUS } from '@morelucks/chessxu-sdk';
+
+export const CHESSXU_DEPLOYER = SDK_DEPLOYER;
+
+export const CONTRACTS = {
+  ...SDK_CONTRACTS,
+  LEADERBOARD: `${SDK_DEPLOYER}.chessxu-leaderboard`,
+};
+
+export { GAME_STATUS };
+
+export const DEFAULT_ELO = 1200;
+export const ELO_K_FACTOR = 32;
+
+export const NETWORK = 'mainnet';
+
+export const CELO_CONFIG = {
+  CHAIN_ID: 42220,
+  RPC_URL: "https://forno.celo.org", // Default Celo RPC Provider (Forno)
+  CONTRACT_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3", // ERC-2771 V2 Implementation
+  TRUSTED_FORWARDER: "0xD4295d9aF32dB85038c82302636d7734E4Cc4f69", // Celo Trusted Forwarder
+  CURRENCY: "CELO",
+  CHAIN_NAME: "Celo",
+  EXPLORER_URL: "https://celoscan.io",
+  CUSD_ADDRESS: "0x765DE816845861e75A25fCA122bb6898B8B1282a",
+  PAYMENT_RECIPIENT: "0xEA22ca862C3AFDA79Ef7Fb5Ae8f13D245354f05b",
+  DAILY_ACCESS_CUSD: "0.1",
+  DAILY_ACCESS_CELO: "0.05",
+  DAILY_ACCESS_DURATION_MS: 24 * 60 * 60 * 1000,
+};
+
+/**
+ * ERC-4337 Paymaster configuration for gasless transactions.
+ * The Chessxu Paymaster sponsors gas for all game operations.
+ */
+export const PAYMASTER_CONFIG = {
+  /** Paymaster sponsorship backend URL */
+  SERVICE_URL: 'https://paymaster.chessxu.xyz/api/v1',
+  /** ERC-4337 EntryPoint v0.6 on Celo mainnet */
+  ENTRYPOINT_ADDRESS: '0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789' as `0x${string}`,
+  /** Deployed ChessxuPaymaster contract address (Celo Mainnet) */
+  PAYMASTER_ADDRESS: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+  /** Bundler RPC endpoint (Pimlico / self-hosted) */
+  BUNDLER_RPC_URL: 'https://bundler.chessxu.xyz/rpc',
+  /** Request timeout in milliseconds */
+  TIMEOUT_MS: 10_000,
+  /** Maximum retry attempts for transient failures */
+  MAX_RETRIES: 3,
+  /** Whitelisted Chessxu game contract */
+  CHESSXU_CONTRACT: '0xf4776929EB56F8C0fC41f87Cc7c4aEa4702de02E' as `0x${string}`,
+  /** Sponsored function selectors */
+  SPONSORED_SELECTORS: [
+    '0x' as `0x${string}`, // submitMove(uint256,string)
+    '0x' as `0x${string}`, // createGame(uint256,bool)
+    '0x' as `0x${string}`, // joinGame(uint256)
+    '0x' as `0x${string}`, // resign(uint256)
+  ],
+};
+
+export const CELO_FEE_CURRENCIES = [
+  {
+    symbol: "USDT",
+    tokenAddress: "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
+    decimals: 6,
+  },
+  {
+    symbol: "USDC",
+    tokenAddress: "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
+    decimals: 6,
+  },
+  {
+    symbol: "cUSD",
+    tokenAddress: "0x765DE816845861e75A25fCA122bb6898B8B1282a",
+    decimals: 18,
+  },
+  {
+    symbol: "cEUR",
+    tokenAddress: "0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73",
+    decimals: 18,
+  },
+  {
+    symbol: "cREAL",
+    tokenAddress: "0xe8537a3d056DA446677B9E9d6c5dB704EaAb4787",
+    decimals: 18,
+  },
+] as const;
+
+
+export const CLARITY_ERRORS = {
+  NOT_OWNER: 100,
+  GAME_EXISTS: 101,
+  GAME_NOT_FOUND: 102,
+  NOT_WAITING: 103,
+  ALREADY_JOINED: 104,
+  INVALID_WAGER: 105,
+  NOT_PLAYER: 106,
+  NOT_YOUR_TURN: 107,
+  GAME_NOT_ACTIVE: 108,
+  INVALID_STATUS: 109,
+};
+
+export const LEADERBOARD_ERRORS = {
+  NOT_AUTHORIZED: 100,
+  PLAYER_NOT_FOUND: 101,
+  INVALID_RESULT: 102,
+  SAME_PLAYER: 103,
+};

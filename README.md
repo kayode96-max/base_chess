@@ -85,7 +85,7 @@ cp .example.env .env.local
 ### 4. Run the Development Server
 
 ```bash
-npm run dev
+npm install
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser. The app auto-reloads on code changes.
@@ -195,223 +195,44 @@ npm run build
 
 #### 2. Deploy to Vercel
 
-```bash
-vercel --prod
+```
+GOOGLE_API_KEY=your_google_api_key
+NEXT_PUBLIC_PROJECT_NAME=Base Chess
+NEXT_PUBLIC_URL=http://localhost:3000
 ```
 
-You'll get a deployment URL: `https://your-project-name.vercel.app/`
+- Get your Google API key from [Google AI Studio](https://ai.google.dev/)
 
-#### 3. Update Environment Variables in Vercel
-
-Go to Vercel dashboard and add production environment variables:
+### 3. Run Locally
 
 ```bash
-NEXT_PUBLIC_PROJECT_NAME=BaseChess
-NEXT_PUBLIC_ONCHAINKIT_API_KEY=<your-production-api-key>
-NEXT_PUBLIC_URL=https://your-project-name.vercel.app
-NEXT_PUBLIC_CHAIN_ID=8453
-GENKIT_API_KEY=<your-genkit-api-key>
-NEXT_PUBLIC_CHESS_CONTRACT_ADDRESS=<mainnet-contract-address>
-```
-
-### Smart Contract Deployment to Base Mainnet
-
-#### 1. Create Deployer Wallet
-
-Set up a wallet with Base ETH for gas fees.
-
-#### 2. Configure Private Key
-
-Add to `.env.local`:
-
-```bash
-PRIVATE_KEY=<your-private-key>
-```
-
-#### 3. Deploy
-
-```bash
-npm run deploy:base
-```
-
-#### 4. Verify Contract (Optional)
-
-```bash
-hardhat verify --network base <CONTRACT_ADDRESS> <CONSTRUCTOR_ARGS>
-```
-
-## Development Workflow
-
-### Local Development
-
-```bash
-# Terminal 1: Next.js dev server
 npm run dev
-
-# Terminal 2: Genkit AI server (optional)
-npm run genkit:dev
-
-# Terminal 3: Hardhat node (for local contract testing)
-npm run node
 ```
 
-### Testing
+Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
-```bash
-# Run all smart contract tests
-npm run test
+---
 
-# Run tests with coverage
-npx hardhat coverage
-```
+## Smart Contracts
 
-### Linting & Code Quality
+- Located in `contracts/`
+- Deploy using Hardhat scripts in `scripts/`
+- Test with `npm run test`
 
-```bash
-npm run lint
-```
+---
 
-## API Endpoints
+## AI Chess
 
-### AI Move Generation
+- Uses Gemini 1.5 Flash via `@google/generative-ai` (see `app/lib/genkitChessAI.ts`)
+- Fallback to local minimax engine if API fails
+- Configure AI in the UI (difficulty, etc.)
 
-**POST** `/api/ai-move`
+---
 
-Generate AI-suggested chess moves using Gemini AI.
+## Deployment
 
-**Request:**
-```json
-{
-  "position": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-  "depth": 2
-}
-```
-
-**Response:**
-```json
-{
-  "move": "e2e4",
-  "evaluation": 0.5,
-  "analysis": "Strong opening move, controls center"
-}
-```
-
-## Tech Stack
-
-### Frontend
-- **Next.js 15.3.8** - React framework with server components
-- **React 19** - UI library
-- **TypeScript** - Type-safe JavaScript
-- **Viem** - Ethereum Web3 library
-- **Wagmi** - React hooks for Web3
-- **OnchainKit** - Coinbase Web3 SDK
-- **TanStack Query** - Data fetching and caching
-
-### Backend & Blockchain
-- **Solidity** - Smart contracts
-- **Hardhat** - Ethereum development environment
-- **Base Chain** - Ethereum L2 scaling solution
-
-### AI & ML
-- **Genkit** - Google's generative AI framework
-- **Google Generative AI** - Gemini AI models
-- **OpenAI API** (optional alternative)
-
-### Tools & Utilities
-- **ESLint** - Code quality and linting
-- **Prettier** - Code formatting
-- **Zod** - Runtime type validation
-
-## Smart Contracts Overview
-
-### Chess.sol
-Core chess game engine with:
-- Complete move validation
-- Game state management
-- Wager and reward system
-- Game history tracking
-
-### ChessAcademy.sol
-Learning platform features:
-- Skill level tracking
-- Achievement system
-- Progress tracking
-- Leaderboard management
-
-### ChessCoach.sol
-Coach marketplace:
-- Coach registration and profiles
-- Booking and scheduling
-- Payment handling
-- Review system
-
-### ChessPuzzles.sol
-Puzzle system:
-- Puzzle creation and curation
-- Difficulty levels
-- Solution tracking
-- Achievement rewards
-
-## Configuration Files
-
-### `minikit.config.ts`
-Farcaster Mini App configuration with manifest, frame settings, and metadata.
-
-### `genkit.config.ts`
-Genkit AI configuration for Gemini model integration and API setup.
-
-### `hardhat.config.js`
-Network configuration for Base Sepolia and Base Mainnet deployment.
-
-### `next.config.ts`
-Next.js optimization settings and webpack configuration.
-
-## Common Tasks
-
-### Deploy to New Network
-
-Edit `hardhat.config.js` to add network configuration, then:
-
-```bash
-hardhat run scripts/deploy.js --network <network-name>
-```
-
-### Generate New Puzzle
-
-Create puzzle data and upload to ChessPuzzles contract:
-
-```bash
-node scripts/createPuzzle.js
-```
-
-### View Contract State
-
-```bash
-npm run genkit:dev
-# Then use Genkit UI to query contract state
-```
-
-## Troubleshooting
-
-### Build Fails
-
-```bash
-# Clear cache and rebuild
-rm -rf .next
-npm run build
-```
-
-### Contract Deployment Fails
-
-- Ensure wallet has sufficient gas (Base ETH)
-- Check network configuration in `hardhat.config.js`
-- Verify `PRIVATE_KEY` in `.env.local`
-
-### AI Moves Not Generating
-
-- Check Genkit server is running: `npm run genkit:dev`
-- Verify `GENKIT_API_KEY` is set
-- Check API rate limits
+- Deploy frontend with [Vercel](https://vercel.com/) or similar
+- Deploy contracts with Hardhat
 
 ### Wallet Connection Issues
 
@@ -429,53 +250,21 @@ npm run build
 
 ## Contributing
 
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Resources
-
-### Documentation
-- [Base Documentation](https://docs.base.org)
-- [Farcaster Mini Apps](https://docs.farcaster.xyz/developers/mini-apps)
-- [OnchainKit Documentation](https://onchainkit.xyz)
-- [Solidity Documentation](https://docs.soliditylang.org)
-- [Hardhat Documentation](https://hardhat.org/docs)
-
-### Learning
-- [Ethereum Development](https://ethereum.org/developers)
-- [Chess Rules & Notation](https://www.chess.com/terms/chess-rules)
-- [Web3 Development Guide](https://web3.foundation)
-
-### Tools
-- [Base Sepolia Faucet](https://docs.base.org/docs/tutorials/hardhat-local-testnet)
-- [Hardhat Documentation](https://hardhat.org)
-- [MetaMask](https://metamask.io)
-
-## License
-
-This project is licensed under the MIT License - see LICENSE file for details.
-
-## Support
-
-For issues, questions, or suggestions:
-- Open an [Issue](../../issues) on GitHub
-- Reach out on [Farcaster](https://farcaster.xyz/)
-- Check [Base Discord Community](https://discord.gg/base)
+1. Fork the repo
+2. Create a feature branch
+3. Commit and push your changes
+4. Open a pull request
 
 ---
 
-## Disclaimer
+## License
 
-This is an educational and demonstration project. Always:
-- Conduct thorough security audits before mainnet deployment
-- Test extensively on testnet (Base Sepolia) first
-- Never deploy with real funds until confident
-- Comply with all applicable laws and regulations
-- Verify all smart contract code before interaction
+MIT
 
-**BaseChess** is not affiliated with professional chess organizations or platforms. Use responsibly and at your own risk.
+---
+
+## Credits
+
+- Built by the Base Chess team
+- AI powered by Google Gemini
+- Onchain contracts inspired by open-source chess projects
